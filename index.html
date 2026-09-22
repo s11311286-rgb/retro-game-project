@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>復古五子棋 Gomoku</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="game">
+    <h1>★ GOMOKU ★</h1>
+    <div class="topbar">
+      <div><span class="label">SCORE</span> <span id="score">0</span></div>
+      <div><span class="label">HIGH</span> <span id="high">0</span></div>
+      <div><span class="label">TURN</span> <span id="turn">PLAYER</span></div>
+    </div>
+    <canvas id="board" width="620" height="620"></canvas>
+    <div class="hint">
+      滑鼠點擊落子　｜　方向鍵 / WASD 移動　｜　ENTER 落子<br>
+      你執黑棋 ●　電腦執白棋 ○　｜　先連成五子者勝
+    </div>
+  </div>
+
+  <div class="gameover" id="over">
+    <div class="panel">
+      <h2 id="result">GAME OVER</h2>
+      <p id="msg"></p>
+      <p>SCORE: <span id="final">0</span></p>
+      <button class="restart" id="restartBtn">按 SPACE 重新開始</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
