@@ -1,6 +1,6 @@
 /**
  * js/core/Game.js
- * 遊戲總協調器：管理實體、系統、狀態切換、回合與結算
+ * 遊戲總協調器：管理實體、系統、狀態切換、回合、音效與結算
  */
 
 import { CANVAS_CONFIG, PIECE_TYPE, TURN_STATE, GAME_STATUS, RULES, AI_CONFIG, STORAGE_KEYS } from '../config.js';
@@ -9,6 +9,7 @@ import { Player } from '../entities/Player.js';
 import { AIPlayer } from '../entities/AIPlayer.js';
 import { Physics } from '../systems/Physics.js';
 import { ParticleSystem } from '../systems/ParticleSystem.js';
+import { AudioSystem } from '../systems/AudioSystem.js';
 import { HUD } from '../ui/HUD.js';
 import { InputHandler } from './InputHandler.js';
 
@@ -29,6 +30,7 @@ export class Game {
     this.player = new Player(7, 7);
     this.aiPlayer = new AIPlayer();
     this.particleSystem = new ParticleSystem();
+    this.audio = new AudioSystem();
     this.hud = new HUD();
 
     // 遊戲狀態資料
@@ -44,13 +46,25 @@ export class Game {
       onCellClick: (gx, gy) => this.handleCellClick(gx, gy),
       onConfirm: () => this.handleConfirmPlace(),
       onRestart: () => this.handleRestartRequest(),
+      onToggleSound: () => this.toggleSound(),
+      onInteraction: () => this.audio.initContext(),
     });
 
-    // 綁定 UI 重新開始按鈕
+    // 綁定 UI 按鈕
     this.hud.bindRestart(() => this.restart());
+    this.hud.bindSoundToggle(() => this.toggleSound());
 
-    // 初始載入最高分數顯示
+    // 初始載入顯示與音訊狀態
     this.hud.updateHighScore(this.highScore);
+    this.hud.updateSoundStatus(this.audio.isMuted);
+  }
+
+  /**
+   * 切換音樂音效開關
+   */
+  toggleSound() {
+    const isMuted = this.audio.toggleMute();
+    this.hud.updateSoundStatus(isMuted);
   }
 
   /**
@@ -74,6 +88,9 @@ export class Game {
     this.hud.updateHighScore(this.highScore);
     this.hud.updateTurn(TURN_STATE.PLAYER);
     this.hud.hideGameOver();
+
+    // 播放背景音樂
+    this.audio.startBGM();
   }
 
   /**
@@ -84,6 +101,7 @@ export class Game {
   handleCursorMove(dx, dy) {
     if (!this.isPlayerTurn || this.status !== GAME_STATUS.PLAYING) return;
     this.player.move(dx, dy);
+    this.audio.playCursorSound();
   }
 
   /**
@@ -124,8 +142,9 @@ export class Game {
   executePlayerPlace(gx, gy) {
     if (!this.board.isEmpty(gx, gy)) return;
 
-    // 1. 放置黑棋
+    // 1. 放置黑棋並記錄最後一手
     this.board.setPiece(gx, gy, PIECE_TYPE.BLACK);
+    this.audio.playMoveSound(true);
 
     // 2. 觸發落子反饋微粒
     const pos = Physics.gridToCanvas(gx, gy);
@@ -138,7 +157,7 @@ export class Game {
       try {
         localStorage.setItem(STORAGE_KEYS.HIGH_SCORE, this.highScore);
       } catch (e) {
-        // 忽略可能存在的 Storage 配額或存取異常
+        // 忽略 Storage 配額異常
       }
       this.hud.updateHighScore(this.highScore);
     }
@@ -146,6 +165,9 @@ export class Game {
 
     // 4. 勝負檢定
     if (Physics.checkWin(this.board, gx, gy, PIECE_TYPE.BLACK)) {
+      const line = Physics.getWinningLine(this.board, gx, gy, PIECE_TYPE.BLACK);
+      this.board.setWinLine(line);
+      this.audio.playWinSound();
       this.endGame(GAME_STATUS.WIN, pos.x, pos.y);
       return;
     }
@@ -177,8 +199,9 @@ export class Game {
       return;
     }
 
-    // 1. 放置白棋
+    // 1. 放置白棋並記錄最後一手
     this.board.setPiece(move.x, move.y, PIECE_TYPE.WHITE);
+    this.audio.playMoveSound(false);
 
     // 2. 觸發落子微粒反饋
     const pos = Physics.gridToCanvas(move.x, move.y);
@@ -186,6 +209,9 @@ export class Game {
 
     // 3. 勝負檢定
     if (Physics.checkWin(this.board, move.x, move.y, PIECE_TYPE.WHITE)) {
+      const line = Physics.getWinningLine(this.board, move.x, move.y, PIECE_TYPE.WHITE);
+      this.board.setWinLine(line);
+      this.audio.playLoseSound();
       this.endGame(GAME_STATUS.LOSE, pos.x, pos.y);
       return;
     }
@@ -221,6 +247,7 @@ export class Game {
    * @param {number} dt - 幀間隔秒數
    */
   update(dt) {
+    this.board.update(dt);
     this.player.update(dt);
     this.particleSystem.update(dt);
   }
@@ -231,7 +258,7 @@ export class Game {
   render() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // 繪製棋盤與棋子
+    // 繪製棋盤、格線、棋子、最後一手標記與勝利連線
     this.board.render(this.ctx);
 
     // 繪製玩家選取框

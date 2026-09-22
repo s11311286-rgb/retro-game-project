@@ -1,6 +1,6 @@
 /**
  * js/core/InputHandler.js
- * 集中監聽與分發使用者輸入事件（鍵盤與滑鼠），包含 CSS 縮放後的畫布座標轉換
+ * 集中監聽與分發使用者輸入事件（鍵盤、滑鼠、音樂開關），包含畫布座標轉換與音訊解鎖觸發
  */
 
 import { GRID_CONFIG } from '../config.js';
@@ -13,6 +13,8 @@ export class InputHandler {
    * @param {function(number, number): void} [listeners.onCellClick] - 點擊網格 (gridX, gridY)
    * @param {function(): void} [listeners.onConfirm] - Enter 確認落子
    * @param {function(): void} [listeners.onRestart] - Space 重新開始
+   * @param {function(): void} [listeners.onToggleSound] - M 鍵切換音效
+   * @param {function(): void} [listeners.onInteraction] - 任意互動解鎖音訊
    */
   constructor(canvas, listeners = {}) {
     this.canvas = canvas;
@@ -42,6 +44,10 @@ export class InputHandler {
    * @param {MouseEvent} e
    */
   _onCanvasClick(e) {
+    if (this.listeners.onInteraction) {
+      this.listeners.onInteraction();
+    }
+
     const rect = this.canvas.getBoundingClientRect();
     const scaleX = this.canvas.width / rect.width;
     const scaleY = this.canvas.height / rect.height;
@@ -62,7 +68,20 @@ export class InputHandler {
    * @param {KeyboardEvent} e
    */
   _onKeyDown(e) {
+    if (this.listeners.onInteraction) {
+      this.listeners.onInteraction();
+    }
+
     const key = e.key.toLowerCase();
+
+    // M 鍵切換音樂音效
+    if (key === 'm') {
+      if (this.listeners.onToggleSound) {
+        e.preventDefault();
+        this.listeners.onToggleSound();
+        return;
+      }
+    }
 
     // 重新開始鍵
     if (e.code === 'Space') {

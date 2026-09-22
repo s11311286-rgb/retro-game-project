@@ -108,3 +108,28 @@ canvas {
 .restart:hover {
   background: #35493d;
 }
+
+.sound-btn {
+  background: #28372e;
+  color: #e8dfc2;
+  border: 2px solid #c5b98e;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  vertical-align: middle;
+}
+
+.sound-btn:hover {
+  background: #3a4f42;
+  color: #fff;
+  border-color: #ffd700;
+}
+
+.sound-btn.muted {
+  color: #8c8573;
+  border-color: #695e47;
+  opacity: 0.8;
+}
+

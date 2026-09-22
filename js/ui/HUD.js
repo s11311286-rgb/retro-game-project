@@ -1,6 +1,6 @@
 /**
  * js/ui/HUD.js
- * 抬頭顯示器與 UI 介面管理（得分、最高紀錄、回合狀態、結算對話框）
+ * 抬頭顯示器與 UI 介面管理（得分、最高紀錄、回合狀態、結算對話框與音樂切換）
  */
 
 import { TURN_STATE, GAME_STATUS } from '../config.js';
@@ -16,6 +16,7 @@ export class HUD {
     this.msgEl = document.getElementById('msg');
     this.finalEl = document.getElementById('final');
     this.restartBtn = document.getElementById('restartBtn');
+    this.soundBtn = document.getElementById('soundBtn');
   }
 
   /**
@@ -45,6 +46,32 @@ export class HUD {
   updateTurn(turn) {
     if (this.turnEl) {
       this.turnEl.textContent = turn;
+    }
+  }
+
+  /**
+   * 更新音樂按鈕狀態
+   * @param {boolean} isMuted
+   */
+  updateSoundStatus(isMuted) {
+    if (this.soundBtn) {
+      if (isMuted) {
+        this.soundBtn.textContent = '🔇 靜音';
+        this.soundBtn.classList.add('muted');
+      } else {
+        this.soundBtn.textContent = '🔊 音樂';
+        this.soundBtn.classList.remove('muted');
+      }
+    }
+  }
+
+  /**
+   * 綁定音樂切換按鈕事件
+   * @param {function(): void} onToggle
+   */
+  bindSoundToggle(onToggle) {
+    if (this.soundBtn) {
+      this.soundBtn.onclick = onToggle;
     }
   }
 

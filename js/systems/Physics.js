@@ -1,6 +1,6 @@
 /**
  * js/systems/Physics.js
- * 空間幾何與棋盤規則判定系統（邊界、座標換算、連線判定與滿盤檢查）
+ * 空間幾何與棋盤規則判定系統（邊界、座標換算、連線判定、勝利線提取與滿盤檢查）
  */
 
 import { GRID_CONFIG, RULES, PIECE_TYPE } from '../config.js';
@@ -56,6 +56,45 @@ export class Physics {
       const backwardCount = this.countInDirection(board, x, y, -dx, -dy, pieceType);
       return 1 + forwardCount + backwardCount >= RULES.WIN_COUNT;
     });
+  }
+
+  /**
+   * 取得觸發獲勝的五顆連珠座標序列（供高亮連線繪製）
+   * @param {import('../entities/Board.js').Board} board
+   * @param {number} x
+   * @param {number} y
+   * @param {number} pieceType
+   * @returns {Array<{x: number, y: number}>|null}
+   */
+  static getWinningLine(board, x, y, pieceType) {
+    if (pieceType === PIECE_TYPE.EMPTY) return null;
+
+    for (const [dx, dy] of RULES.DIRECTIONS) {
+      const forwardPoints = [];
+      let cx = x + dx;
+      let cy = y + dy;
+      while (this.inside(cx, cy) && board.getPiece(cx, cy) === pieceType) {
+        forwardPoints.push({ x: cx, y: cy });
+        cx += dx;
+        cy += dy;
+      }
+
+      const backwardPoints = [];
+      cx = x - dx;
+      cy = y - dy;
+      while (this.inside(cx, cy) && board.getPiece(cx, cy) === pieceType) {
+        backwardPoints.push({ x: cx, y: cy });
+        cx -= dx;
+        cy -= dy;
+      }
+
+      if (1 + forwardPoints.length + backwardPoints.length >= RULES.WIN_COUNT) {
+        // 從最遠的後方向延伸至最遠的前方向排序
+        return [...backwardPoints.reverse(), { x, y }, ...forwardPoints];
+      }
+    }
+
+    return null;
   }
 
   /**
