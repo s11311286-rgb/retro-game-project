@@ -1,21 +1,19 @@
 /**
  * js/core/GameLoop.js
- * 核心遊戲主循環，基於 requestAnimationFrame 並提供精確的 Delta Time (dt)
+ * 遊戲主循環：基於 requestAnimationFrame 與固定時間步長 (Fixed Time Step) 驅動更新
  */
 
 export class GameLoop {
   /**
-   * @param {function(number): void} updateFn - 每幀更新邏輯，接收 dt (秒)
-   * @param {function(): void} renderFn - 每幀繪製回呼
+   * @param {Function} updateFn 每步邏輯更新 (步長約 20ms)
    */
-  constructor(updateFn, renderFn) {
+  constructor(updateFn) {
     this.updateFn = updateFn;
-    this.renderFn = renderFn;
-    this.lastTime = 0;
-    this.animationFrameId = null;
     this.isRunning = false;
-
-    this._loop = this._loop.bind(this);
+    this.rafId = null;
+    this.lastTime = 0;
+    this.accumulator = 0;
+    this.timeStep = 20; // 與原版 setInterval 20ms 步調完全一致
   }
 
   /**
@@ -25,41 +23,34 @@ export class GameLoop {
     if (this.isRunning) return;
     this.isRunning = true;
     this.lastTime = performance.now();
-    this.animationFrameId = requestAnimationFrame(this._loop);
+    this.accumulator = 0;
+
+    const frame = (now) => {
+      if (!this.isRunning) return;
+
+      const delta = Math.min(now - this.lastTime, 100); // 避免分頁切換時螺旋累積
+      this.lastTime = now;
+      this.accumulator += delta;
+
+      while (this.accumulator >= this.timeStep) {
+        this.updateFn();
+        this.accumulator -= this.timeStep;
+      }
+
+      this.rafId = requestAnimationFrame(frame);
+    };
+
+    this.rafId = requestAnimationFrame(frame);
   }
 
   /**
    * 停止主循環
    */
   stop() {
-    if (!this.isRunning) return;
     this.isRunning = false;
-    if (this.animationFrameId !== null) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = null;
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
     }
-  }
-
-  /**
-   * 內部循環幀處理
-   * @private
-   * @param {DOMHighResTimeStamp} currentTime
-   */
-  _loop(currentTime) {
-    if (!this.isRunning) return;
-
-    // 計算幀間隔 dt（秒），並限制最大間隔防止切換分頁後的累積躍進
-    const dt = Math.min((currentTime - this.lastTime) / 1000, 0.1);
-    this.lastTime = currentTime;
-
-    if (typeof this.updateFn === 'function') {
-      this.updateFn(dt);
-    }
-
-    if (typeof this.renderFn === 'function') {
-      this.renderFn();
-    }
-
-    this.animationFrameId = requestAnimationFrame(this._loop);
   }
 }

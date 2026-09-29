@@ -15,7 +15,7 @@ try {
 }
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host " ★ 五子棋模組化專案已成功啟動！" -ForegroundColor Green
+Write-Host " ★ DINO RUN 恐龍跳躍專案已成功啟動！" -ForegroundColor Green
 Write-Host " 本機網址: $url" -ForegroundColor Yellow
 Write-Host " 正在為您開啟瀏覽器..." -ForegroundColor Gray
 Write-Host " (如欲結束伺服器，請直接關閉此命令視窗)" -ForegroundColor DarkGray

@@ -1,0 +1,1920 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>DINO RUN - 恐龍跳躍</title>
+
+<style>
+
+/* =========================
+   基本設定
+========================= */
+
+* {
+    box-sizing: border-box;
+    user-select: none;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: #f7f7f7;
+    color: #222;
+
+    font-family: "Courier New", monospace;
+
+    transition: 0.4s;
+}
+
+body.night {
+    background: #222;
+    color: #eee;
+}
+
+.container {
+    width: 1000px;
+    max-width: 95%;
+}
+
+
+/* =========================
+   標題
+========================= */
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 15px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo-dino {
+    font-size: 50px;
+}
+
+.logo h1 {
+    margin: 0;
+
+    font-size: 32px;
+    letter-spacing: 4px;
+}
+
+.logo p {
+    margin: 4px 0 0;
+
+    font-family: Arial, sans-serif;
+}
+
+
+/* =========================
+   分數
+========================= */
+
+.score-board {
+    text-align: right;
+
+    font-size: 20px;
+    line-height: 1.7;
+}
+
+.score {
+    letter-spacing: 3px;
+}
+
+
+/* =========================
+   遊戲區
+========================= */
+
+#game {
+    position: relative;
+
+    width: 100%;
+    height: 330px;
+
+    overflow: hidden;
+
+    background: white;
+
+    border: 3px solid #333;
+
+    transition: 0.4s;
+}
+
+body.night #game {
+    background: #222;
+    border-color: #aaa;
+}
+
+
+/* =========================
+   太陽
+========================= */
+
+.sun {
+    position: absolute;
+
+    top: 45px;
+    right: 120px;
+
+    width: 45px;
+    height: 45px;
+
+    border-radius: 50%;
+
+    background: #ddd;
+}
+
+
+/* =========================
+   雲
+========================= */
+
+.cloud {
+    position: absolute;
+
+    width: 70px;
+    height: 20px;
+
+    background: #ddd;
+
+    border-radius: 20px;
+}
+
+.cloud::before {
+    content: "";
+
+    position: absolute;
+
+    width: 35px;
+    height: 35px;
+
+    left: 15px;
+    top: -18px;
+
+    background: #ddd;
+
+    border-radius: 50%;
+}
+
+.cloud1 {
+    top: 60px;
+    left: 25%;
+}
+
+.cloud2 {
+    top: 105px;
+    left: 65%;
+}
+
+body.night .cloud,
+body.night .cloud::before {
+    background: #444;
+}
+
+
+/* =========================
+   星星
+========================= */
+
+.stars {
+    display: none;
+
+    position: absolute;
+
+    inset: 0;
+}
+
+body.night .stars {
+    display: block;
+}
+
+.star {
+    position: absolute;
+
+    width: 3px;
+    height: 3px;
+
+    background: white;
+}
+
+
+/* =========================
+   地面
+========================= */
+
+.ground {
+    position: absolute;
+
+    left: 0;
+    bottom: 45px;
+
+    width: 100%;
+    height: 3px;
+
+    background: #333;
+
+    z-index: 2;
+}
+
+body.night .ground {
+    background: #ddd;
+}
+
+
+/* =========================
+   恐龍
+========================= */
+
+#dino {
+    position: absolute;
+
+    left: 90px;
+    bottom: 48px;
+
+    width: 55px;
+    height: 65px;
+
+    background: #333;
+
+    z-index: 20;
+}
+
+
+/* 恐龍頭 */
+
+#dino::before {
+    content: "";
+
+    position: absolute;
+
+    width: 42px;
+    height: 38px;
+
+    right: -18px;
+    top: -20px;
+
+    background: #333;
+}
+
+
+/* 恐龍尾巴 */
+
+#dino::after {
+    content: "";
+
+    position: absolute;
+
+    width: 30px;
+    height: 12px;
+
+    left: -22px;
+    top: 18px;
+
+    background: #333;
+
+    transform: rotate(-25deg);
+}
+
+
+/* 恐龍眼睛 */
+
+.eye {
+    position: absolute;
+
+    width: 7px;
+    height: 7px;
+
+    right: -8px;
+    top: -12px;
+
+    background: white;
+
+    z-index: 30;
+}
+
+
+/* 恐龍腿 */
+
+.leg {
+    position: absolute;
+
+    width: 11px;
+    height: 23px;
+
+    bottom: -18px;
+
+    background: #333;
+}
+
+.leg1 {
+    left: 8px;
+}
+
+.leg2 {
+    right: 8px;
+}
+
+
+/* =========================
+   跑步動畫
+========================= */
+
+#dino.running .leg1 {
+    animation: runLeg1 0.16s infinite alternate;
+}
+
+#dino.running .leg2 {
+    animation: runLeg2 0.16s infinite alternate;
+}
+
+@keyframes runLeg1 {
+
+    from {
+        transform: rotate(25deg);
+    }
+
+    to {
+        transform: rotate(-25deg);
+    }
+}
+
+@keyframes runLeg2 {
+
+    from {
+        transform: rotate(-25deg);
+    }
+
+    to {
+        transform: rotate(25deg);
+    }
+}
+
+
+/* =========================
+   跳躍
+========================= */
+
+#dino.jump {
+    animation: dinoJump 0.65s ease-out;
+}
+
+@keyframes dinoJump {
+
+    0% {
+        bottom: 48px;
+    }
+
+    45% {
+        bottom: 190px;
+    }
+
+    100% {
+        bottom: 48px;
+    }
+}
+
+
+/* =========================
+   蹲下
+========================= */
+
+#dino.duck {
+
+    height: 38px;
+    bottom: 48px;
+}
+
+#dino.duck::before {
+
+    top: -12px;
+    height: 30px;
+}
+
+#dino.duck .leg {
+
+    height: 15px;
+}
+
+
+/* =========================
+   仙人掌
+========================= */
+
+.obstacle.cactus-group {
+
+    position: absolute;
+
+    bottom: 48px;
+    left: 100%;
+
+    display: flex;
+
+    gap: 8px;
+
+    z-index: 10;
+}
+
+
+/* 單支仙人掌 */
+
+.cactus {
+
+    position: relative;
+
+    width: 25px;
+    height: 65px;
+
+    background: #333;
+}
+
+
+/* 仙人掌手 */
+
+.cactus::before,
+.cactus::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 15px;
+    height: 28px;
+
+    top: 20px;
+
+    background: #333;
+}
+
+.cactus::before {
+
+    left: -13px;
+}
+
+.cactus::after {
+
+    right: -13px;
+}
+
+
+/* 小仙人掌 */
+
+.cactus.small {
+
+    width: 19px;
+    height: 43px;
+}
+
+.cactus.small::before,
+.cactus.small::after {
+
+    width: 12px;
+    height: 20px;
+
+    top: 15px;
+}
+
+
+/* =========================
+   鳥
+========================= */
+
+.obstacle.bird {
+
+    position: absolute;
+
+    left: 100%;
+
+    width: 45px;
+    height: 22px;
+
+    background: #333;
+
+    z-index: 10;
+}
+
+
+/* 鳥翅膀 */
+
+.bird::before {
+
+    content: "";
+
+    position: absolute;
+
+    width: 25px;
+    height: 10px;
+
+    left: -13px;
+    top: -8px;
+
+    background: #333;
+
+    transform: rotate(-20deg);
+}
+
+.bird::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 25px;
+    height: 10px;
+
+    right: -15px;
+    top: 5px;
+
+    background: #333;
+
+    transform: rotate(15deg);
+}
+
+
+/* =========================
+   開始畫面
+========================= */
+
+#startScreen {
+
+    position: absolute;
+
+    inset: 0;
+
+    z-index: 50;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    text-align: center;
+
+    background: rgba(255,255,255,0.93);
+}
+
+body.night #startScreen {
+
+    background: rgba(30,30,30,0.94);
+}
+
+.start-content h2 {
+
+    font-size: 38px;
+
+    margin: 0 0 15px;
+}
+
+.start-content p {
+
+    font-family: Arial, sans-serif;
+
+    font-size: 20px;
+}
+
+.start-key {
+
+    display: inline-block;
+
+    margin-top: 10px;
+
+    padding: 10px 25px;
+
+    border: 3px solid currentColor;
+
+    font-size: 20px;
+}
+
+
+/* =========================
+   GAME OVER
+========================= */
+
+#gameOver {
+
+    display: none;
+
+    position: absolute;
+
+    inset: 0;
+
+    z-index: 60;
+
+    text-align: center;
+
+    padding-top: 75px;
+
+    background: rgba(255,255,255,0.92);
+}
+
+body.night #gameOver {
+
+    background: rgba(20,20,20,0.92);
+}
+
+#gameOver h2 {
+
+    margin: 5px;
+
+    font-size: 40px;
+}
+
+#gameOver p {
+
+    font-family: Arial, sans-serif;
+
+    font-size: 20px;
+}
+
+
+/* =========================
+   按鈕
+========================= */
+
+button {
+
+    padding: 10px 25px;
+
+    border: 2px solid currentColor;
+
+    background: transparent;
+
+    color: inherit;
+
+    font-family: "Courier New", monospace;
+
+    font-size: 18px;
+
+    cursor: pointer;
+}
+
+button:hover {
+
+    background: #333;
+
+    color: white;
+}
+
+
+/* =========================
+   控制區
+========================= */
+
+.controls {
+
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    margin-top: 15px;
+
+    font-family: Arial, sans-serif;
+}
+
+.key {
+
+    display: inline-block;
+
+    margin: 0 3px;
+
+    padding: 7px 12px;
+
+    border: 2px solid currentColor;
+
+    border-radius: 4px;
+}
+
+.mode-btn {
+
+    cursor: pointer;
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <!-- =========================
+         標題
+    ========================== -->
+
+    <div class="header">
+
+        <div class="logo">
+
+            <div class="logo-dino">
+                🦖
+            </div>
+
+            <div>
+
+                <h1>DINO RUN</h1>
+
+                <p>
+                    躲避障礙，跑得更遠！
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="score-board">
+
+            分數
+            <span id="score" class="score">
+                00000
+            </span>
+
+            <br>
+
+            最高
+            <span id="highScore" class="score">
+                00000
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         遊戲
+    ========================== -->
+
+    <div id="game">
+
+
+        <!-- 太陽 -->
+
+        <div class="sun"></div>
+
+
+        <!-- 星星 -->
+
+        <div class="stars">
+
+            <span class="star"
+                  style="left:10%;top:20%">
+            </span>
+
+            <span class="star"
+                  style="left:20%;top:35%">
+            </span>
+
+            <span class="star"
+                  style="left:35%;top:15%">
+            </span>
+
+            <span class="star"
+                  style="left:50%;top:30%">
+            </span>
+
+            <span class="star"
+                  style="left:70%;top:18%">
+            </span>
+
+            <span class="star"
+                  style="left:85%;top:35%">
+            </span>
+
+        </div>
+
+
+        <!-- 雲 -->
+
+        <div class="cloud cloud1"></div>
+
+        <div class="cloud cloud2"></div>
+
+
+        <!-- =====================
+             開始畫面
+        ====================== -->
+
+        <div id="startScreen">
+
+            <div class="start-content">
+
+                <h2>
+                    🦖 DINO RUN
+                </h2>
+
+                <p>
+                    準備好開始挑戰了嗎？
+                </p>
+
+                <div class="start-key">
+
+                    按 SPACE 或 ↑ 開始
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================
+             恐龍
+        ====================== -->
+
+        <div id="dino">
+
+            <div class="eye"></div>
+
+            <div class="leg leg1"></div>
+
+            <div class="leg leg2"></div>
+
+        </div>
+
+
+        <!-- 地面 -->
+
+        <div class="ground"></div>
+
+
+        <!-- =====================
+             GAME OVER
+        ====================== -->
+
+        <div id="gameOver">
+
+            <h2>
+                GAME OVER
+            </h2>
+
+            <p>
+
+                分數：
+                <span id="finalScore">
+                    00000
+                </span>
+
+            </p>
+
+            <button onclick="restartGame()">
+
+                ↻ 重新開始
+
+            </button>
+
+            <p>
+                按 SPACE 也可以重新開始
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =========================
+         控制
+    ========================== -->
+
+    <div class="controls">
+
+
+        <div>
+
+            <span class="key">
+                ↑
+            </span>
+
+            <span class="key">
+                SPACE
+            </span>
+
+            跳躍
+
+        </div>
+
+
+        <div>
+
+            <span class="key">
+                ↓
+            </span>
+
+            蹲下
+
+        </div>
+
+
+        <div>
+
+            速度：
+            <span id="speedText">
+                1.0x
+            </span>
+
+        </div>
+
+
+        <button
+            class="mode-btn"
+            onclick="toggleNight()">
+
+            ☀ / 🌙 夜晚模式
+
+        </button>
+
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+/* =========================================
+   取得 HTML 元素
+========================================= */
+
+const game =
+    document.getElementById("game");
+
+const dino =
+    document.getElementById("dino");
+
+const scoreElement =
+    document.getElementById("score");
+
+const highScoreElement =
+    document.getElementById("highScore");
+
+const finalScoreElement =
+    document.getElementById("finalScore");
+
+const startScreen =
+    document.getElementById("startScreen");
+
+const gameOverElement =
+    document.getElementById("gameOver");
+
+const speedText =
+    document.getElementById("speedText");
+
+
+/* =========================================
+   遊戲變數
+========================================= */
+
+let score = 0;
+
+let highScore =
+    Number(
+        localStorage.getItem("dinoHighScore")
+    ) || 0;
+
+let gameRunning = false;
+
+let jumping = false;
+
+let ducking = false;
+
+let speed = 6;
+
+let obstacleTimer = null;
+
+let scoreTimer = null;
+
+
+/* =========================================
+   顯示最高分
+========================================= */
+
+highScoreElement.textContent =
+    formatScore(highScore);
+
+
+/* =========================================
+   分數格式
+========================================= */
+
+function formatScore(number) {
+
+    return String(number).padStart(5, "0");
+
+}
+
+
+/* =========================================
+   開始遊戲
+========================================= */
+
+function startGame() {
+
+    /*
+        防止重複開始
+    */
+
+    if (gameRunning) {
+        return;
+    }
+
+
+    gameRunning = true;
+
+    jumping = false;
+
+    ducking = false;
+
+
+    /*
+        隱藏開始與 GAME OVER
+    */
+
+    startScreen.style.display =
+        "none";
+
+    gameOverElement.style.display =
+        "none";
+
+
+    /*
+        恐龍開始跑
+    */
+
+    dino.classList.add("running");
+
+
+    /*
+        初始化
+    */
+
+    score = 0;
+
+    speed = 6;
+
+
+    scoreElement.textContent =
+        "00000";
+
+    speedText.textContent =
+        "1.0x";
+
+
+    /*
+        開始計分
+    */
+
+    startScore();
+
+
+    /*
+        稍微等待一下再產生第一個障礙
+    */
+
+    obstacleTimer =
+        setTimeout(() => {
+
+            obstacleLoop();
+
+        }, 1000);
+
+}
+
+
+/* =========================================
+   跳躍
+========================================= */
+
+function jump() {
+
+    /*
+        如果還沒開始
+        SPACE / ↑ 直接開始
+    */
+
+    if (!gameRunning) {
+
+        startGame();
+
+        return;
+
+    }
+
+
+    /*
+        跳躍中不能再次跳
+    */
+
+    if (jumping) {
+        return;
+    }
+
+
+    /*
+        蹲下時不能跳
+    */
+
+    if (ducking) {
+        return;
+    }
+
+
+    jumping = true;
+
+
+    dino.classList.add("jump");
+
+
+    setTimeout(() => {
+
+        dino.classList.remove("jump");
+
+        jumping = false;
+
+    }, 650);
+
+}
+
+
+/* =========================================
+   蹲下
+========================================= */
+
+function duckStart() {
+
+    if (!gameRunning) {
+        return;
+    }
+
+    if (jumping) {
+        return;
+    }
+
+
+    ducking = true;
+
+    dino.classList.add("duck");
+
+}
+
+
+function duckEnd() {
+
+    ducking = false;
+
+    dino.classList.remove("duck");
+
+}
+
+
+/* =========================================
+   鍵盤控制
+========================================= */
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+
+        /*
+            SPACE / ↑
+        */
+
+        if (
+            event.code === "Space" ||
+            event.code === "ArrowUp"
+        ) {
+
+            event.preventDefault();
+
+            /*
+                如果 GAME OVER
+                SPACE 直接重新開始
+            */
+
+            if (
+                !gameRunning &&
+                gameOverElement.style.display === "block"
+            ) {
+
+                restartGame();
+
+                return;
+
+            }
+
+
+            jump();
+
+        }
+
+
+        /*
+            ↓ 蹲下
+        */
+
+        if (
+            event.code === "ArrowDown"
+        ) {
+
+            event.preventDefault();
+
+            duckStart();
+
+        }
+
+
+        /*
+            Enter
+        */
+
+        if (
+            event.code === "Enter" &&
+            !gameRunning
+        ) {
+
+            if (
+                gameOverElement.style.display === "block"
+            ) {
+
+                restartGame();
+
+            } else {
+
+                startGame();
+
+            }
+
+        }
+
+    }
+);
+
+
+/* =========================================
+   放開 ↓
+========================================= */
+
+document.addEventListener(
+    "keyup",
+    function(event) {
+
+        if (
+            event.code === "ArrowDown"
+        ) {
+
+            duckEnd();
+
+        }
+
+    }
+);
+
+
+/* =========================================
+   滑鼠操作
+========================================= */
+
+game.addEventListener(
+    "mousedown",
+    function() {
+
+        /*
+            開始或跳躍
+        */
+
+        if (
+            gameOverElement.style.display === "block"
+        ) {
+
+            restartGame();
+
+        } else {
+
+            jump();
+
+        }
+
+    }
+);
+
+
+/* =========================================
+   手機觸控
+========================================= */
+
+game.addEventListener(
+    "touchstart",
+    function(event) {
+
+        event.preventDefault();
+
+        if (
+            gameOverElement.style.display === "block"
+        ) {
+
+            restartGame();
+
+        } else {
+
+            jump();
+
+        }
+
+    }
+);
+
+
+/* =========================================
+   建立仙人掌
+========================================= */
+
+function createCactus() {
+
+    /*
+        外層障礙物
+        整組一起移動
+    */
+
+    const group =
+        document.createElement("div");
+
+    group.className =
+        "obstacle cactus-group";
+
+
+    /*
+        35% 機率雙仙人掌
+    */
+
+    const amount =
+        Math.random() < 0.35
+        ? 2
+        : 1;
+
+
+    for (
+        let i = 0;
+        i < amount;
+        i++
+    ) {
+
+        const cactus =
+            document.createElement("div");
+
+        cactus.className =
+            "cactus";
+
+
+        /*
+            30% 機率小仙人掌
+        */
+
+        if (
+            Math.random() < 0.3
+        ) {
+
+            cactus.classList.add(
+                "small"
+            );
+
+        }
+
+
+        group.appendChild(cactus);
+
+    }
+
+
+    /*
+        從畫面右邊出現
+    */
+
+    group.style.left =
+        game.offsetWidth + "px";
+
+
+    game.appendChild(group);
+
+
+    /*
+        開始移動
+    */
+
+    moveObstacle(group);
+
+}
+
+
+/* =========================================
+   建立鳥
+========================================= */
+
+function createBird() {
+
+    const bird =
+        document.createElement("div");
+
+    bird.className =
+        "obstacle bird";
+
+
+    /*
+        三種高度
+    */
+
+    const heights = [
+        105,
+        145,
+        185
+    ];
+
+
+    const height =
+        heights[
+            Math.floor(
+                Math.random() *
+                heights.length
+            )
+        ];
+
+
+    bird.style.bottom =
+        height + "px";
+
+
+    bird.style.left =
+        game.offsetWidth + "px";
+
+
+    game.appendChild(bird);
+
+
+    moveObstacle(bird);
+
+}
+
+
+/* =========================================
+   障礙物移動 + 碰撞判定
+========================================= */
+
+function moveObstacle(obstacle) {
+
+    let position =
+        game.offsetWidth;
+
+
+    const timer =
+        setInterval(() => {
+
+
+            /*
+                遊戲結束
+            */
+
+            if (!gameRunning) {
+
+                clearInterval(timer);
+
+                obstacle.remove();
+
+                return;
+
+            }
+
+
+            /*
+                障礙物往左
+            */
+
+            position -= speed;
+
+
+            obstacle.style.left =
+                position + "px";
+
+
+            /*
+                =====================
+                碰撞判定
+                =====================
+            */
+
+            const dinoRect =
+                dino.getBoundingClientRect();
+
+            const obstacleRect =
+                obstacle.getBoundingClientRect();
+
+
+            /*
+                稍微縮小碰撞箱
+                讓遊戲不會太難
+            */
+
+            const dinoLeft =
+                dinoRect.left + 8;
+
+            const dinoRight =
+                dinoRect.right - 8;
+
+            const dinoTop =
+                dinoRect.top + 8;
+
+            const dinoBottom =
+                dinoRect.bottom - 5;
+
+
+            const obstacleLeft =
+                obstacleRect.left + 2;
+
+            const obstacleRight =
+                obstacleRect.right - 2;
+
+            const obstacleTop =
+                obstacleRect.top + 2;
+
+            const obstacleBottom =
+                obstacleRect.bottom - 2;
+
+
+            /*
+                X 軸重疊
+            */
+
+            const horizontalCollision =
+
+                dinoRight >
+                obstacleLeft &&
+
+                dinoLeft <
+                obstacleRight;
+
+
+            /*
+                Y 軸重疊
+            */
+
+            const verticalCollision =
+
+                dinoBottom >
+                obstacleTop &&
+
+                dinoTop <
+                obstacleBottom;
+
+
+            /*
+                同時符合 X + Y
+                就算撞到
+            */
+
+            if (
+                horizontalCollision &&
+                verticalCollision
+            ) {
+
+                gameOver();
+
+                clearInterval(timer);
+
+                return;
+
+            }
+
+
+            /*
+                離開畫面
+            */
+
+            if (
+                position <
+                -150
+            ) {
+
+                clearInterval(timer);
+
+                obstacle.remove();
+
+            }
+
+        }, 20);
+
+}
+
+
+/* =========================================
+   障礙物產生循環
+========================================= */
+
+function obstacleLoop() {
+
+    if (!gameRunning) {
+        return;
+    }
+
+
+    /*
+        隨機決定：
+
+        25% = 鳥
+        75% = 仙人掌
+    */
+
+    if (
+        Math.random() < 0.25
+    ) {
+
+        createBird();
+
+    } else {
+
+        createCactus();
+
+    }
+
+
+    /*
+        分數越高
+        障礙物越快出現
+    */
+
+    const delay =
+        Math.max(
+            650,
+            1500 - score * 2.5
+        );
+
+
+    obstacleTimer =
+        setTimeout(
+            obstacleLoop,
+            delay
+        );
+
+}
+
+
+/* =========================================
+   分數系統
+========================================= */
+
+function startScore() {
+
+    /*
+        避免重複計分
+    */
+
+    clearInterval(scoreTimer);
+
+
+    scoreTimer =
+        setInterval(() => {
+
+
+            if (!gameRunning) {
+                return;
+            }
+
+
+            score++;
+
+
+            scoreElement.textContent =
+                formatScore(score);
+
+
+            /*
+                每 100 分增加速度
+            */
+
+            speed =
+                6 +
+                Math.floor(
+                    score / 100
+                ) * 0.7;
+
+
+            speedText.textContent =
+                (
+                    speed / 6
+                ).toFixed(1) + "x";
+
+
+        }, 100);
+
+}
+
+
+/* =========================================
+   GAME OVER
+========================================= */
+
+function gameOver() {
+
+    /*
+        防止重複觸發
+    */
+
+    if (!gameRunning) {
+        return;
+    }
+
+
+    gameRunning = false;
+
+
+    /*
+        停止計時
+    */
+
+    clearTimeout(obstacleTimer);
+
+    clearInterval(scoreTimer);
+
+
+    /*
+        恐龍停止跑步
+    */
+
+    dino.classList.remove(
+        "running"
+    );
+
+
+    /*
+        停止所有障礙物
+    */
+
+    document
+        .querySelectorAll(".obstacle")
+        .forEach(
+            obstacle => {
+                obstacle.remove();
+            }
+        );
+
+
+    /*
+        顯示最後分數
+    */
+
+    finalScoreElement.textContent =
+        formatScore(score);
+
+
+    /*
+        更新最高分
+    */
+
+    if (
+        score > highScore
+    ) {
+
+        highScore = score;
+
+
+        localStorage.setItem(
+            "dinoHighScore",
+            highScore
+        );
+
+
+        highScoreElement.textContent =
+            formatScore(highScore);
+
+    }
+
+
+    /*
+        顯示 GAME OVER
+    */
+
+    gameOverElement.style.display =
+        "block";
+
+}
+
+
+/* =========================================
+   重新開始
+========================================= */
+
+function restartGame() {
+
+    /*
+        停止舊計時器
+    */
+
+    clearTimeout(obstacleTimer);
+
+    clearInterval(scoreTimer);
+
+
+    /*
+        清除所有障礙物
+    */
+
+    document
+        .querySelectorAll(".obstacle")
+        .forEach(
+            obstacle => {
+                obstacle.remove();
+            }
+        );
+
+
+    /*
+        重設遊戲
+    */
+
+    score = 0;
+
+    speed = 6;
+
+    gameRunning = false;
+
+    jumping = false;
+
+    ducking = false;
+
+
+    /*
+        重設畫面
+    */
+
+    scoreElement.textContent =
+        "00000";
+
+    speedText.textContent =
+        "1.0x";
+
+
+    dino.classList.remove(
+        "jump"
+    );
+
+    dino.classList.remove(
+        "duck"
+    );
+
+    dino.classList.remove(
+        "running"
+    );
+
+
+    /*
+        隱藏 GAME OVER
+    */
+
+    gameOverElement.style.display =
+        "none";
+
+
+    /*
+        重新開始
+    */
+
+    startGame();
+
+}
+
+
+/* =========================================
+   夜晚模式
+========================================= */
+
+function toggleNight() {
+
+    document.body.classList.toggle(
+        "night"
+    );
+
+}
+
+</script>
+
+</body>
+</html>
+```
