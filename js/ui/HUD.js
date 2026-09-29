@@ -1,6 +1,6 @@
 /**
  * js/ui/HUD.js
- * 抬頭顯示器與 UI 介面管理（得分、最高紀錄、回合狀態、結算對話框與音樂切換）
+ * 抬頭顯示器與 UI 介面管理（得分、最高紀錄、回合狀態、難度切換、結算對話框與音樂開關）
  */
 
 import { TURN_STATE, GAME_STATUS } from '../config.js';
@@ -17,6 +17,9 @@ export class HUD {
     this.finalEl = document.getElementById('final');
     this.restartBtn = document.getElementById('restartBtn');
     this.soundBtn = document.getElementById('soundBtn');
+
+    this.diffBtn = document.getElementById('diffBtn');
+    this.overDiffEl = document.getElementById('overDiff');
   }
 
   /**
@@ -66,6 +69,33 @@ export class HUD {
   }
 
   /**
+   * 更新難度按鈕與標籤狀態
+   * @param {string} diffId
+   * @param {string} label
+   * @param {string} icon
+   */
+  updateDifficulty(diffId, label, icon) {
+    const text = `${icon} ${label}`;
+    if (this.diffBtn) {
+      this.diffBtn.textContent = text;
+      this.diffBtn.dataset.diff = diffId;
+    }
+    if (this.overDiffEl) {
+      this.overDiffEl.textContent = text;
+    }
+  }
+
+  /**
+   * 綁定難度切換事件
+   * @param {function(): void} onToggle
+   */
+  bindDifficultyToggle(onToggle) {
+    if (this.diffBtn) {
+      this.diffBtn.onclick = onToggle;
+    }
+  }
+
+  /**
    * 綁定音樂切換按鈕事件
    * @param {function(): void} onToggle
    */
@@ -79,12 +109,17 @@ export class HUD {
    * 顯示遊戲結算對話框
    * @param {string} status - GAME_STATUS.WIN, LOSE, 或 DRAW
    * @param {number} finalScore
+   * @param {string} [diffText]
    */
-  showGameOver(status, finalScore) {
+  showGameOver(status, finalScore, diffText = '') {
     if (!this.overEl) return;
 
     if (this.finalEl) {
       this.finalEl.textContent = finalScore;
+    }
+
+    if (this.overDiffEl && diffText) {
+      this.overDiffEl.textContent = diffText;
     }
 
     let title = 'GAME OVER';

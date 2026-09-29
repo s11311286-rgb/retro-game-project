@@ -1,84 +1,131 @@
 /**
  * js/config.js
- * 遊戲參數、物理屬性、障礙物生成機率、難度等級與常數設定
+ * 遊戲全域常數、尺寸、規則、三種難度等級與視覺配置
  */
 
-export const CONFIG = Object.freeze({
-  // 三種難度等級配置
-  DIFFICULTIES: Object.freeze({
-    EASY: Object.freeze({
-      ID: 'EASY',
-      LABEL: '簡單',
-      ICON: '🟢',
-      INITIAL_SPEED: 4.5,
-      SPEED_INCREMENT: 0.4,
-      BASE_DELAY_MS: 1800,
-      MIN_DELAY_MS: 900,
-      BIRD_CHANCE: 0.15,
-      DOUBLE_CACTUS_CHANCE: 0.15,
-    }),
-    NORMAL: Object.freeze({
-      ID: 'NORMAL',
-      LABEL: '普通',
-      ICON: '🟡',
-      INITIAL_SPEED: 6.0,
-      SPEED_INCREMENT: 0.7,
-      BASE_DELAY_MS: 1500,
-      MIN_DELAY_MS: 650,
-      BIRD_CHANCE: 0.25,
-      DOUBLE_CACTUS_CHANCE: 0.35,
-    }),
-    HARD: Object.freeze({
-      ID: 'HARD',
-      LABEL: '困難',
-      ICON: '🔴',
-      INITIAL_SPEED: 8.0,
-      SPEED_INCREMENT: 1.0,
-      BASE_DELAY_MS: 1100,
-      MIN_DELAY_MS: 480,
-      BIRD_CHANCE: 0.40,
-      DOUBLE_CACTUS_CHANCE: 0.50,
-    }),
+export const CANVAS_CONFIG = Object.freeze({
+  WIDTH: 620,
+  HEIGHT: 620,
+});
+
+export const GRID_CONFIG = Object.freeze({
+  SIZE: 15,
+  CELL_SIZE: 40,
+  OFFSET: 20,
+  STAR_POINTS: [
+    [3, 3], [7, 3], [11, 3],
+    [3, 7], [7, 7], [11, 7],
+    [3, 11], [7, 11], [11, 11],
+  ],
+  STAR_POINT_RADIUS: 5,
+});
+
+export const PIECE_TYPE = Object.freeze({
+  EMPTY: 0,
+  BLACK: 1, // 玩家執黑
+  WHITE: 2, // 電腦執白
+});
+
+export const TURN_STATE = Object.freeze({
+  PLAYER: 'PLAYER',
+  COMPUTER: 'COMPUTER',
+});
+
+export const GAME_STATUS = Object.freeze({
+  IDLE: 'IDLE',
+  PLAYING: 'PLAYING',
+  WIN: 'WIN',
+  LOSE: 'LOSE',
+  DRAW: 'DRAW',
+});
+
+export const RULES = Object.freeze({
+  WIN_COUNT: 5,
+  SCORE_PER_MOVE: 10,
+  DIRECTIONS: [
+    [1, 0],   // 水平
+    [0, 1],   // 垂直
+    [1, 1],   // 正斜
+    [1, -1],  // 反斜
+  ],
+});
+
+// 三種難度配置 (簡單 / 普通 / 困難)
+export const DIFFICULTY_CONFIG = Object.freeze({
+  EASY: Object.freeze({
+    ID: 'EASY',
+    LABEL: '簡單',
+    ICON: '🟢',
+    THINK_DELAY_MS: 200,
+    OFFENSE_WEIGHT: 0.85,
+    DEFENSE_WEIGHT: 0.70,
+    RANDOM_BLUNDER_RATE: 0.35, // 35% 機率在次優點隨機落子，降低進攻壓迫
+    CHECK_FORKS: false,
   }),
+  NORMAL: Object.freeze({
+    ID: 'NORMAL',
+    LABEL: '普通',
+    ICON: '🟡',
+    THINK_DELAY_MS: 350,
+    OFFENSE_WEIGHT: 1.15,
+    DEFENSE_WEIGHT: 1.00,
+    RANDOM_BLUNDER_RATE: 0.0,
+    CHECK_FORKS: false,
+  }),
+  HARD: Object.freeze({
+    ID: 'HARD',
+    LABEL: '困難',
+    ICON: '🔴',
+    THINK_DELAY_MS: 450,
+    OFFENSE_WEIGHT: 1.25,
+    DEFENSE_WEIGHT: 1.20,
+    RANDOM_BLUNDER_RATE: 0.0,
+    CHECK_FORKS: true, // 深度計算雙三、雙四、四三等組合殺招與防禦
+  }),
+});
 
-  // 預設難度與本地儲存 Key
-  DEFAULT_DIFFICULTY: 'NORMAL',
-  DIFFICULTY_STORAGE_KEY: 'dinoDifficulty',
+export const DEFAULT_DIFFICULTY = 'NORMAL';
 
-  // 速度成長間距 (每幾分提升一次速度)
-  SPEED_STEP_SCORE: 100,
-
-  // 恐龍跳躍時長（與 CSS @keyframes dinoJump 0.65s 同步）
-  JUMP_DURATION_MS: 650,
-
-  // 障礙物通用規則
-  OBSTACLE: {
-    INITIAL_DELAY_MS: 1000,
-    DELAY_FACTOR: 2.5,
-    SMALL_CACTUS_CHANCE: 0.30,  // 30% 機率為小仙人掌
-    BIRD_HEIGHTS: [105, 145, 185], // 飛鳥三種飛行高度 (bottom px)
-    DESPAWN_X: -150,           // 超出左側邊界後移除 (px)
+export const AI_CONFIG = Object.freeze({
+  THINK_DELAY_MS: 350,
+  OFFENSE_WEIGHT: 1.15,
+  CENTER_BIAS: 10,
+  SCORES: {
+    FIVE: 100000,
+    LIVE_FOUR: 10000,
+    SLEEP_FOUR: 3000,
+    LIVE_THREE: 1000,
+    SLEEP_THREE: 200,
+    LIVE_TWO: 100,
+    SLEEP_TWO: 20,
+    DEFAULT: 5,
   },
+});
 
-  // 碰撞箱內縮容錯值 (AABB Collision Padding)
-  COLLISION: {
-    DINO: {
-      PADDING_LEFT: 8,
-      PADDING_RIGHT: 8,
-      PADDING_TOP: 8,
-      PADDING_BOTTOM: 5,
-    },
-    OBSTACLE: {
-      PADDING_LEFT: 2,
-      PADDING_RIGHT: 2,
-      PADDING_TOP: 2,
-      PADDING_BOTTOM: 2,
-    },
+export const THEME = Object.freeze({
+  BOARD_BG: '#b59a67',
+  GRID_LINE: '#463c29',
+  STAR_POINT: '#403624',
+  PIECE_RADIUS: 15,
+  PLAYER_PIECE: {
+    FILL: '#111613',
+    STROKE: '#303b34',
+    LINE_WIDTH: 2,
   },
+  AI_PIECE: {
+    FILL: '#ded8c1',
+    STROKE: '#77725f',
+    LINE_WIDTH: 2,
+  },
+  CURSOR: {
+    STROKE: '#e9d99d',
+    LINE_WIDTH: 3,
+    BOX_SIZE: 36,
+    BOX_OFFSET: 18,
+  },
+});
 
-  // 計分定時器間隔 (ms)
-  SCORE_INTERVAL_MS: 100,
-
-  // 本地儲存鍵名
-  STORAGE_KEY: 'dinoHighScore',
+export const STORAGE_KEYS = Object.freeze({
+  HIGH_SCORE: 'gomokuHigh',
+  DIFFICULTY: 'gomokuDifficulty',
 });
