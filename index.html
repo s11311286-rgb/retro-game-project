@@ -7,19 +7,48 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="game">
-    <h1>★ GOMOKU ★</h1>
+
+  <!-- ===== 難度選單 ===== -->
+  <div class="menu" id="menu">
+    <div class="menu-box">
+      <h1 class="menu-title">&#9733; GOMOKU &#9733;</h1>
+      <p class="menu-sub">&#x8907;&#x53E4;&#x4E94;&#x5B50;&#x68CB;&#x3000;&#x4EBA;&#x6A5F;&#x5C0D;&#x6230;</p>
+      <p class="menu-hint">&#x8ACB;&#x9078;&#x64C7;&#x96E3;&#x5EA6;</p>
+      <div class="diff-cards">
+        <button class="diff-card easy" data-diff="EASY">
+          <span class="card-icon">&#x1F7E2;</span>
+          <span class="card-label">&#x7C21;&#x55AE;</span>
+          <span class="card-desc">AI &#x5076;&#x723E;&#x72AF;&#x932F;<br>&#x9069;&#x5408;&#x65B0;&#x624B;</span>
+        </button>
+        <button class="diff-card normal" data-diff="NORMAL">
+          <span class="card-icon">&#x1F7E1;</span>
+          <span class="card-label">&#x666E;&#x901A;</span>
+          <span class="card-desc">&#x6A19;&#x6E96; AI<br>&#x5747;&#x8861;&#x6311;&#x6230;</span>
+        </button>
+        <button class="diff-card hard" data-diff="HARD">
+          <span class="card-icon">&#x1F534;</span>
+          <span class="card-label">&#x56F0;&#x96E3;</span>
+          <span class="card-desc">&#x9032;&#x968E;&#x7B56;&#x7565;<br>&#x9AD8;&#x624B;&#x624D;&#x8A66;</span>
+        </button>
+      </div>
+      <p class="menu-footer">&#x4F60;&#x57F7;&#x9ED1;&#x68CB; &#x25CF;&#x3000;&#x96FB;&#x8166;&#x57F7;&#x767D;&#x68CB; &#x25CB;&#x3000;&#x5148;&#x9023;&#x6210;&#x4E94;&#x5B50;&#x8005;&#x52DD;</p>
+    </div>
+  </div>
+
+  <!-- ===== &#x9078;&#x64C7;&#x96E3;&#x5EA6;&#x5F8C;&#x624D;&#x986F;&#x793A;&#x9019;&#x5340;&#x584A; ===== -->
+  <div class="game" id="gameArea" style="display:none">
+    <h1>&#9733; GOMOKU &#9733;</h1>
     <div class="topbar">
       <div><span class="label">SCORE</span> <span id="score">0</span></div>
       <div><span class="label">HIGH</span> <span id="high">0</span></div>
       <div><span class="label">TURN</span> <span id="turn">PLAYER</span></div>
-      <div><button class="diff-btn" id="diffBtn" title="點擊切換難度 (簡單/普通/困難)">🟡 普通</button></div>
-      <div><button class="sound-btn" id="soundBtn" title="音效開關 (快捷鍵: M)">🔊 音樂</button></div>
+      <div><button class="diff-btn" id="diffBtn" title="&#x9EDE;&#x64CA;&#x5207;&#x63DB;&#x96E3;&#x5EA6;">&#x1F7E1; &#x666E;&#x901A;</button></div>
+      <div><button class="sound-btn" id="soundBtn" title="&#x97F3;&#x6548;&#x958B;&#x95DC; (M)">&#x1F50A; &#x97F3;&#x6A02;</button></div>
     </div>
     <canvas id="board" width="620" height="620"></canvas>
     <div class="hint">
-      滑鼠點擊落子　｜　方向鍵 / WASD 移動　｜　ENTER 落子　｜　點擊按鈕切換難度　｜　M 切換音樂<br>
-      你執黑棋 ●　電腦執白棋 ○　｜　先連成五子者勝
+      &#x6ED1;&#x9F20;&#x9EDE;&#x64CA;&#x843D;&#x5B50;&#x3000;&#xFF5C;&#x3000;&#x65B9;&#x5411;&#x9375; / WASD &#x79FB;&#x52D5;&#x3000;&#xFF5C;&#x3000;ENTER &#x843D;&#x5B50;&#x3000;&#xFF5C;&#x3000;M &#x5207;&#x63DB;&#x97F3;&#x6A02;<br>
+      &#x4F60;&#x57F7;&#x9ED1;&#x68CB; &#x25CF;&#x3000;&#x96FB;&#x8166;&#x57F7;&#x767D;&#x68CB; &#x25CB;&#x3000;&#xFF5C;&#x3000;&#x5148;&#x9023;&#x6210;&#x4E94;&#x5B50;&#x8005;&#x52DD;
     </div>
   </div>
 
@@ -27,9 +56,10 @@
     <div class="panel">
       <h2 id="result">GAME OVER</h2>
       <p id="msg"></p>
-      <p>難度：<span id="overDiff">🟡 普通</span></p>
+      <p>&#x96E3;&#x5EA6;&#xFF1A;<span id="overDiff">&#x1F7E1; &#x666E;&#x901A;</span></p>
       <p>SCORE: <span id="final">0</span></p>
-      <button class="restart" id="restartBtn">按 SPACE 重新開始</button>
+      <button class="restart" id="restartBtn">&#x6309; SPACE &#x91CD;&#x65B0;&#x958B;&#x59CB;</button>
+      <button class="menu-btn" id="menuBtn">&#x8FD4;&#x56DE;&#x9078;&#x55AE;</button>
     </div>
   </div>
 

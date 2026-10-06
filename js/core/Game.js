@@ -25,8 +25,9 @@ import { InputHandler } from './InputHandler.js';
 export class Game {
   /**
    * @param {HTMLCanvasElement} canvas
+   * @param {string} [initialDiffId] - 'EASY' | 'NORMAL' | 'HARD'，由選單傳入
    */
-  constructor(canvas) {
+  constructor(canvas, initialDiffId) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
 
@@ -42,13 +43,16 @@ export class Game {
     this.audio = new AudioSystem();
     this.hud = new HUD();
 
-    // 難度狀態管理 (預設載入 LocalStorage 或使用預設)
+    // 難度狀態管理：優先使用選單傳入值，其次 LocalStorage，最後預設值
     this.currentDifficultyId =
-      localStorage.getItem(STORAGE_KEYS.DIFFICULTY) || DEFAULT_DIFFICULTY;
+      (initialDiffId && DIFFICULTY_CONFIG[initialDiffId])
+        ? initialDiffId
+        : (localStorage.getItem(STORAGE_KEYS.DIFFICULTY) || DEFAULT_DIFFICULTY);
     if (!DIFFICULTY_CONFIG[this.currentDifficultyId]) {
       this.currentDifficultyId = DEFAULT_DIFFICULTY;
     }
     this.currentDifficulty = DIFFICULTY_CONFIG[this.currentDifficultyId];
+
 
     // 遊戲狀態資料
     this.status = GAME_STATUS.IDLE;
