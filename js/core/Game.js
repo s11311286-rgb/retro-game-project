@@ -19,6 +19,8 @@ import { AIPlayer } from '../entities/AIPlayer.js';
 import { Physics } from '../systems/Physics.js';
 import { ParticleSystem } from '../systems/ParticleSystem.js';
 import { AudioSystem } from '../systems/AudioSystem.js';
+import { InkLandscape } from '../systems/InkLandscape.js';
+import { QiSystem } from '../systems/QiSystem.js';
 import { HUD } from '../ui/HUD.js';
 import { InputHandler } from './InputHandler.js';
 
@@ -36,9 +38,11 @@ export class Game {
     this.canvas.height = CANVAS_CONFIG.HEIGHT;
 
     // 建立實體與系統
+    this.landscape = new InkLandscape(this.canvas.width, this.canvas.height);
     this.board = new Board();
     this.player = new Player(7, 7);
     this.aiPlayer = new AIPlayer();
+    this.qiSystem = new QiSystem();
     this.particleSystem = new ParticleSystem();
     this.audio = new AudioSystem();
     this.hud = new HUD();
@@ -421,22 +425,39 @@ export class Game {
    * @param {number} dt - 幀間隔秒數
    */
   update(dt) {
+    this.landscape.update(dt);
     this.board.update(dt);
+    this.qiSystem.update(dt);
     this.player.update(dt);
     this.particleSystem.update(dt);
     this._updateAICursor(dt);
   }
 
   /**
-   * 幀畫面渲染
+   * 幀畫面渲染：
+   * 1. 溫潤宣紙山水長卷動態背景（遠山、流水、飛鳥、竹影）
+   * 2. 棋盤水墨格線與星位
+   * 3. 局勢提示：黑白二氣流動相連與陰陽交鋒氣旋
+   * 4. 棋子實體、最後一手硃砂落款、五連珠書法揮毫
+   * 5. AI 與玩家游標
+   * 6. 水墨入水漣漪擴散與落子墨筋拉絲炸裂反饋
    */
   render() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // 繪製棋盤、格線、棋子、最後一手標記與勝利連線
-    this.board.render(this.ctx);
+    // 1. 水墨山水長卷動態背景
+    this.landscape.render(this.ctx);
 
-    // 繪製 AI 游標（AI 落子動畫中才顯示）
+    // 2. 棋盤水墨格線與星位定位點
+    this.board.renderGrid(this.ctx);
+
+    // 3. 局勢提示：水墨「氣」流湧動（同色相連牽引、黑白交鋒氣旋）
+    this.qiSystem.render(this.ctx, this.board);
+
+    // 4. 棋子實體、最後一手硃砂落款、五連珠書法墨線
+    this.board.renderPieces(this.ctx);
+
+    // 5. 繪製 AI 游標（AI 落子動畫中才顯示）
     if (this.aiCursor) {
       this.board.renderAICursor(
         this.ctx,
@@ -447,11 +468,11 @@ export class Game {
       );
     }
 
-    // 繪製玩家選取框
+    // 6. 繪製玩家選取框
     const isEnded = this.status !== GAME_STATUS.PLAYING;
     this.player.render(this.ctx, this.isPlayerTurn, isEnded);
 
-    // 繪製粒子特效
+    // 7. 繪製落子水墨漣漪、墨筋拉絲炸裂與勝利飛花
     this.particleSystem.render(this.ctx);
   }
 }

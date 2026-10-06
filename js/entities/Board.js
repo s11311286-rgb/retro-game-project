@@ -90,22 +90,18 @@ export class Board extends Entity {
   }
 
   /**
-   * 繪製棋盤、格線、星位、棋子、最後一手標記與勝利連線
+   * 繪製棋盤水墨格線與星位定位點
    * @param {CanvasRenderingContext2D} ctx
    */
-  render(ctx) {
+  renderGrid(ctx) {
     const { OFFSET, CELL_SIZE, SIZE, STAR_POINTS, STAR_POINT_RADIUS } = GRID_CONFIG;
-    const { WIDTH, HEIGHT } = CANVAS_CONFIG;
-
-    // 1. 棋盤底色
-    ctx.fillStyle = THEME.BOARD_BG;
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-    // 2. 棋盤格線
-    ctx.strokeStyle = THEME.GRID_LINE;
-    ctx.lineWidth = 2;
-
     const maxCoord = OFFSET + (SIZE - 1) * CELL_SIZE;
+
+    ctx.save();
+
+    // 棋盤格線（蒼勁深黛水墨細線）
+    ctx.strokeStyle = 'rgba(48, 38, 25, 0.75)';
+    ctx.lineWidth = 1.8;
 
     for (let i = 0; i < SIZE; i++) {
       const pos = OFFSET + i * CELL_SIZE;
@@ -123,8 +119,8 @@ export class Board extends Entity {
       ctx.stroke();
     }
 
-    // 3. 星位定位點
-    ctx.fillStyle = THEME.STAR_POINT;
+    // 星位定位點（圓潤小墨點）
+    ctx.fillStyle = 'rgba(38, 30, 20, 0.85)';
     for (let i = 0; i < STAR_POINTS.length; i++) {
       const [sx, sy] = STAR_POINTS[i];
       const px = OFFSET + sx * CELL_SIZE;
@@ -135,7 +131,17 @@ export class Board extends Entity {
       ctx.fill();
     }
 
-    // 4. 繪製棋子
+    ctx.restore();
+  }
+
+  /**
+   * 繪製所有棋子、最後一手硃砂落款與勝利書法連線
+   * @param {CanvasRenderingContext2D} ctx
+   */
+  renderPieces(ctx) {
+    const { SIZE } = GRID_CONFIG;
+
+    // 1. 繪製棋子
     for (let y = 0; y < SIZE; y++) {
       for (let x = 0; x < SIZE; x++) {
         const piece = this.grid[y][x];
@@ -145,15 +151,24 @@ export class Board extends Entity {
       }
     }
 
-    // 5. 繪製最後一手落子標記 (Last Move Marker)
+    // 2. 繪製最後一手落子標記 (Last Move Marker)
     if (this.lastMove) {
       this._renderLastMoveMarker(ctx, this.lastMove.x, this.lastMove.y, this.lastMove.type);
     }
 
-    // 6. 繪製五連珠獲勝連線 (Winning Line Highlight)
+    // 3. 繪製五連珠獲勝連線 (Winning Line Highlight)
     if (this.winLine && this.winLine.length >= 2) {
       this._renderWinningLine(ctx, this.winLine);
     }
+  }
+
+  /**
+   * 相容預設渲染（先格線後棋子）
+   * @param {CanvasRenderingContext2D} ctx
+   */
+  render(ctx) {
+    this.renderGrid(ctx);
+    this.renderPieces(ctx);
   }
 
   /**
