@@ -157,40 +157,44 @@ export class Board extends Entity {
   }
 
   /**
-   * 繪製單枚棋子（帶放射漸層光暈）
+   * 繪製單枚棋子（水墨墨錠與溫潤玉石質感）
    * @private
    */
   _renderPiece(ctx, x, y, pieceType) {
     const { OFFSET, CELL_SIZE } = GRID_CONFIG;
-    const { PIECE_RADIUS, PLAYER_PIECE, AI_PIECE } = THEME;
+    const { PIECE_RADIUS } = THEME;
 
     const px = OFFSET + x * CELL_SIZE;
     const py = OFFSET + y * CELL_SIZE;
     const r  = PIECE_RADIUS;
     const isPlayer = pieceType === PIECE_TYPE.BLACK;
 
-    // 外部柔光環
-    const glowColor = isPlayer ? 'rgba(100,180,100,0.18)' : 'rgba(255,240,160,0.18)';
-    const glowGrad = ctx.createRadialGradient(px, py, r * 0.6, px, py, r * 1.6);
-    glowGrad.addColorStop(0, glowColor);
-    glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.save();
+
+    // 1. 水墨在宣紙的自然滲墨外圈（墨暈邊緣）
+    const bleedColor = isPlayer ? 'rgba(15, 20, 16, 0.28)' : 'rgba(235, 225, 195, 0.35)';
+    const bleedGrad = ctx.createRadialGradient(px, py, r * 0.7, px, py, r * 1.35);
+    bleedGrad.addColorStop(0, bleedColor);
+    bleedGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.beginPath();
-    ctx.arc(px, py, r * 1.6, 0, Math.PI * 2);
-    ctx.fillStyle = glowGrad;
+    ctx.arc(px, py, r * 1.35, 0, Math.PI * 2);
+    ctx.fillStyle = bleedGrad;
     ctx.fill();
 
-    // 棋子主體（放射漸層）
-    const hiX = px - r * 0.28;
-    const hiY = py - r * 0.28;
-    const grad = ctx.createRadialGradient(hiX, hiY, r * 0.05, px, py, r);
+    // 2. 棋子主體（黑棋如油煙墨錠，白棋如羊脂素玉）
+    const hiX = px - r * 0.32;
+    const hiY = py - r * 0.32;
+    const grad = ctx.createRadialGradient(hiX, hiY, r * 0.08, px, py, r);
     if (isPlayer) {
-      grad.addColorStop(0, '#6a7a6a');
-      grad.addColorStop(0.4, '#2a2e2a');
-      grad.addColorStop(1, '#0d100d');
+      grad.addColorStop(0, '#3a443e'); // 墨頂微光
+      grad.addColorStop(0.35, '#1b221d'); // 濃墨
+      grad.addColorStop(0.85, '#0a0d0b'); // 焦墨
+      grad.addColorStop(1, '#050705');
     } else {
-      grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.4, '#e0dcc8');
-      grad.addColorStop(1, '#aaa898');
+      grad.addColorStop(0, '#ffffff'); // 白玉凝脂
+      grad.addColorStop(0.4, '#ede6ce');
+      grad.addColorStop(0.85, '#d3c9aa');
+      grad.addColorStop(1, '#b5ab8d'); // 宣紙雅灰
     }
 
     ctx.beginPath();
@@ -198,27 +202,25 @@ export class Board extends Entity {
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // 輪廓
-    const style = isPlayer ? PLAYER_PIECE : AI_PIECE;
-    ctx.strokeStyle = style.STROKE;
-    ctx.lineWidth = style.LINE_WIDTH;
+    // 3. 仿手工雕琢自然墨玉輪廓
+    ctx.strokeStyle = isPlayer ? '#28322a' : '#8f866e';
+    ctx.lineWidth = 1.6;
     ctx.stroke();
 
-    // 高光反射小圓點
-    const hlX = px - r * 0.3;
-    const hlY = py - r * 0.32;
-    const hlR = r * 0.22;
-    const hlGrad = ctx.createRadialGradient(hlX, hlY, 0, hlX, hlY, hlR);
-    hlGrad.addColorStop(0, isPlayer ? 'rgba(255,255,255,0.38)' : 'rgba(255,255,255,0.65)');
-    hlGrad.addColorStop(1, 'rgba(255,255,255,0)');
+    // 4. 水墨反光微光斑
+    const hlGrad = ctx.createRadialGradient(hiX, hiY, 0, hiX, hiY, r * 0.4);
+    hlGrad.addColorStop(0, isPlayer ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.7)');
+    hlGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
     ctx.beginPath();
-    ctx.arc(hlX, hlY, hlR, 0, Math.PI * 2);
+    ctx.arc(hiX, hiY, r * 0.4, 0, Math.PI * 2);
     ctx.fillStyle = hlGrad;
     ctx.fill();
+
+    ctx.restore();
   }
 
   /**
-   * 繪製最後一手提示光環（紅心點與呼吸外環）
+   * 繪製最後一手提示（古典硃砂印記與水墨朱紅暈染）
    * @private
    */
   _renderLastMoveMarker(ctx, x, y, type) {
@@ -228,28 +230,38 @@ export class Board extends Entity {
 
     ctx.save();
     const isPlayer = type === PIECE_TYPE.BLACK;
-    const markerColor = isPlayer ? '#e74c3c' : '#c0392b';
+    // 硃砂朱紅（古書畫印泥色澤）
+    const cinnabar = isPlayer ? 'rgba(196, 44, 30,' : 'rgba(176, 36, 24,';
+    const pulse = 0.5 + Math.sin(this.pulseTimer * 3) * 0.5;
 
-    // 中心小紅點
+    // 1. 外圍硃砂淡墨呼吸暈（微宣紙擴散）
+    const haloR = 12 + pulse * 4;
+    const haloGrad = ctx.createRadialGradient(px, py, 4, px, py, haloR);
+    haloGrad.addColorStop(0, `${cinnabar} ${0.35 + pulse * 0.25})`);
+    haloGrad.addColorStop(1, `${cinnabar} 0)`);
     ctx.beginPath();
-    ctx.arc(px, py, 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = markerColor;
+    ctx.arc(px, py, haloR, 0, Math.PI * 2);
+    ctx.fillStyle = haloGrad;
     ctx.fill();
 
-    // 呼吸動態外環 (半徑 8 ~ 11px)
-    const ringRadius = 9 + Math.sin(this.pulseTimer) * 2;
+    // 2. 硃砂古印外框（中式古典圓形小印紋）
     ctx.beginPath();
-    ctx.arc(px, py, ringRadius, 0, Math.PI * 2);
-    ctx.strokeStyle = markerColor;
-    ctx.lineWidth = 1.8;
-    ctx.globalAlpha = 0.75 + Math.sin(this.pulseTimer) * 0.25;
+    ctx.arc(px, py, 7.5 + pulse * 1.5, 0, Math.PI * 2);
+    ctx.strokeStyle = `${cinnabar} ${0.85 + pulse * 0.15})`;
+    ctx.lineWidth = 1.6;
     ctx.stroke();
+
+    // 3. 中心硃砂落款點
+    ctx.beginPath();
+    ctx.arc(px, py, 2.8, 0, Math.PI * 2);
+    ctx.fillStyle = `${cinnabar} 0.95)`;
+    ctx.fill();
 
     ctx.restore();
   }
 
   /**
-   * 繪製五子連線金色光芒特效（呼吸閃爍動畫）
+   * 繪製五子連線（毛筆揮毫濃淡水墨連貫筆鋒）
    * @private
    */
   _renderWinningLine(ctx, line) {
@@ -262,56 +274,64 @@ export class Board extends Entity {
     const ex = OFFSET + end.x   * CELL_SIZE;
     const ey = OFFSET + end.y   * CELL_SIZE;
 
-    // 呼吸係數 0.0 ~ 1.0
-    const pulse = 0.5 + Math.sin(this.pulseTimer * 2.5) * 0.5;
+    const pulse = 0.5 + Math.sin(this.pulseTimer * 2.2) * 0.5;
 
     ctx.save();
 
-    // 1. 最外層大光暈
+    // 1. 最外層淡墨暈染（水墨在生宣上迅速透化的墨韻）
     ctx.beginPath();
     ctx.moveTo(sx, sy);
     ctx.lineTo(ex, ey);
-    ctx.strokeStyle = `rgba(255, 215, 0, ${0.12 + pulse * 0.18})`;
-    ctx.lineWidth = 22;
+    ctx.strokeStyle = `rgba(18, 25, 20, ${0.16 + pulse * 0.12})`;
+    ctx.lineWidth = 26;
     ctx.lineCap = 'round';
     ctx.stroke();
 
-    // 2. 中層發光
+    // 2. 次層水墨濕筆觸
     ctx.beginPath();
     ctx.moveTo(sx, sy);
     ctx.lineTo(ex, ey);
-    ctx.strokeStyle = `rgba(255, 215, 0, ${0.3 + pulse * 0.25})`;
-    ctx.lineWidth = 12;
+    ctx.strokeStyle = `rgba(32, 42, 35, ${0.45 + pulse * 0.2})`;
+    ctx.lineWidth = 14;
     ctx.lineCap = 'round';
     ctx.stroke();
 
-    // 3. 亮金核心
+    // 3. 書法主幹：蒼勁焦墨一筆貫穿
     ctx.beginPath();
     ctx.moveTo(sx, sy);
     ctx.lineTo(ex, ey);
-    ctx.strokeStyle = `rgba(255, 240, 80, ${0.7 + pulse * 0.3})`;
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = `rgba(12, 16, 13, ${0.85 + pulse * 0.15})`;
+    ctx.lineWidth = 4.5;
     ctx.lineCap = 'round';
     ctx.stroke();
 
-    // 4. 每個勝利棋子周圍金色呼吸環
+    // 4. 書法飛白與硃砂雙色印氣：貫穿五子的硃砂朱線提氣
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(ex, ey);
+    ctx.strokeStyle = `rgba(215, 60, 42, ${0.4 + pulse * 0.4})`;
+    ctx.lineWidth = 1.8;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // 5. 連線每顆棋子外圈的水墨朱文古印環
     line.forEach(({ x, y }) => {
       const px = OFFSET + x * CELL_SIZE;
       const py = OFFSET + y * CELL_SIZE;
 
-      // 外環
+      // 宣紙墨暈外環
       ctx.beginPath();
-      ctx.arc(px, py, THEME.PIECE_RADIUS + 3 + pulse * 3, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255, 215, 0, ${0.5 + pulse * 0.4})`;
+      ctx.arc(px, py, THEME.PIECE_RADIUS + 4 + pulse * 3, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(200, 48, 35, ${0.6 + pulse * 0.35})`;
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // 內光暈
-      const grd = ctx.createRadialGradient(px, py, 0, px, py, THEME.PIECE_RADIUS + 6);
-      grd.addColorStop(0, `rgba(255, 240, 100, ${0.25 + pulse * 0.2})`);
-      grd.addColorStop(1, 'rgba(255, 215, 0, 0)');
+      // 棋心淡淡墨色聚氣
+      const grd = ctx.createRadialGradient(px, py, 0, px, py, THEME.PIECE_RADIUS + 8);
+      grd.addColorStop(0, `rgba(210, 50, 36, ${0.22 + pulse * 0.18})`);
+      grd.addColorStop(1, 'rgba(18, 25, 20, 0)');
       ctx.beginPath();
-      ctx.arc(px, py, THEME.PIECE_RADIUS + 6, 0, Math.PI * 2);
+      ctx.arc(px, py, THEME.PIECE_RADIUS + 8, 0, Math.PI * 2);
       ctx.fillStyle = grd;
       ctx.fill();
     });
@@ -320,65 +340,57 @@ export class Board extends Entity {
   }
 
   /**
-   * 繪製 AI 游標：一個滑動的白色發光圓環，模擬真人手指移到落子位置
+   * 繪製 AI 游標（古風懸空毛筆提筆點墨、墨滴探位意境）
    * @param {CanvasRenderingContext2D} ctx
-   * @param {number} gridX  浮點格座標 X（支援插值位置）
+   * @param {number} gridX  浮點格座標 X
    * @param {number} gridY  浮點格座標 Y
    * @param {number} pulseT 動畫計時器
-   * @param {boolean} isArrived 是否已到達目標格（顯示落子前停頓動畫）
+   * @param {boolean} isArrived 是否已到達目標格（欲點墨頓筆）
    */
   renderAICursor(ctx, gridX, gridY, pulseT, isArrived) {
     const { OFFSET, CELL_SIZE } = GRID_CONFIG;
     const px = OFFSET + gridX * CELL_SIZE;
     const py = OFFSET + gridY * CELL_SIZE;
 
-    // 呼吸值：移動中微幅脈動，到達後強烈脈動
-    const beatSpeed = isArrived ? 8 : 3;
+    const beatSpeed = isArrived ? 7 : 3;
     const beat = 0.5 + Math.sin(pulseT * beatSpeed) * 0.5;
 
     ctx.save();
 
-    // 1. 外層大光暈（到達時明顯擴張）
-    const glowR = isArrived ? 20 + beat * 6 : 18;
-    const glowAlpha = isArrived ? 0.18 + beat * 0.2 : 0.12;
-    const glowGrad = ctx.createRadialGradient(px, py, 0, px, py, glowR);
-    glowGrad.addColorStop(0, `rgba(220, 230, 255, ${glowAlpha})`);
-    glowGrad.addColorStop(1, 'rgba(180, 200, 255, 0)');
+    // 1. 提筆懸空的淡淡水墨水氣
+    const mistR = isArrived ? 22 + beat * 6 : 16;
+    const mistGrad = ctx.createRadialGradient(px, py, 2, px, py, mistR);
+    mistGrad.addColorStop(0, isArrived ? `rgba(215, 60, 40, ${0.28 + beat * 0.2})` : 'rgba(40, 50, 42, 0.22)');
+    mistGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.beginPath();
-    ctx.arc(px, py, glowR, 0, Math.PI * 2);
-    ctx.fillStyle = glowGrad;
+    ctx.arc(px, py, mistR, 0, Math.PI * 2);
+    ctx.fillStyle = mistGrad;
     ctx.fill();
 
-    // 2. 主圓環（移動中為細環，到達時加粗並呼吸縮放）
-    const ringR = isArrived ? 13 + beat * 3 : 12;
+    // 2. 懸停墨圈（到達時轉為硃砂欲點之色）
+    const ringR = isArrived ? 12 + beat * 3 : 11;
     ctx.beginPath();
     ctx.arc(px, py, ringR, 0, Math.PI * 2);
     ctx.strokeStyle = isArrived
-      ? `rgba(255, 255, 220, ${0.7 + beat * 0.3})`
-      : 'rgba(220, 220, 255, 0.75)';
-    ctx.lineWidth = isArrived ? 2.5 : 1.8;
+      ? `rgba(205, 45, 32, ${0.75 + beat * 0.25})`
+      : 'rgba(38, 50, 42, 0.7)';
+    ctx.lineWidth = isArrived ? 2.2 : 1.6;
     ctx.stroke();
 
-    // 3. 內環（到達時才顯示）
-    if (isArrived) {
-      ctx.beginPath();
-      ctx.arc(px, py, 7 + beat * 2, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255, 255, 180, ${0.5 + beat * 0.4})`;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    }
-
-    // 4. 中心小點（十字準心感）
+    // 3. 毛筆筆鋒水滴形核心墨點
+    const dropR = isArrived ? 3.5 + beat * 1.5 : 2.5;
     ctx.beginPath();
-    ctx.arc(px, py, isArrived ? 2 + beat : 2, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 255, 255, ${isArrived ? 0.7 + beat * 0.3 : 0.6})`;
+    ctx.arc(px, py, dropR, 0, Math.PI * 2);
+    ctx.fillStyle = isArrived
+      ? `rgba(185, 35, 25, ${0.85 + beat * 0.15})`
+      : 'rgba(20, 26, 22, 0.85)';
     ctx.fill();
 
-    // 5. 移動中顯示小十字線（方向感）
+    // 4. 移動中的毛筆行筆虛線微痕
     if (!isArrived) {
-      const arm = 5;
-      ctx.strokeStyle = 'rgba(200, 210, 255, 0.5)';
-      ctx.lineWidth = 1;
+      const arm = 6;
+      ctx.strokeStyle = 'rgba(45, 58, 48, 0.45)';
+      ctx.lineWidth = 1.2;
       ctx.beginPath(); ctx.moveTo(px - arm, py); ctx.lineTo(px + arm, py); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(px, py - arm); ctx.lineTo(px, py + arm); ctx.stroke();
     }
@@ -386,3 +398,4 @@ export class Board extends Entity {
     ctx.restore();
   }
 }
+

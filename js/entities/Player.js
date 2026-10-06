@@ -69,16 +69,53 @@ export class Player extends Entity {
     const { OFFSET, CELL_SIZE } = GRID_CONFIG;
     const { CURSOR } = THEME;
 
-    const px = OFFSET + this.gridX * CELL_SIZE - CURSOR.BOX_OFFSET;
-    const py = OFFSET + this.gridY * CELL_SIZE - CURSOR.BOX_OFFSET;
+    const cx = OFFSET + this.gridX * CELL_SIZE;
+    const cy = OFFSET + this.gridY * CELL_SIZE;
+    const r = CURSOR.BOX_OFFSET; // 半邊距 18
+    const arm = 7; // 折角長度
 
     ctx.save();
-    ctx.strokeStyle = CURSOR.STROKE;
-    ctx.lineWidth = CURSOR.LINE_WIDTH;
+    // 雅緻古墨與宣紙暗金
+    const alpha = 0.8 + Math.sin(this.pulseTime * 2.5) * 0.2;
+    ctx.strokeStyle = `rgba(35, 45, 38, ${alpha})`;
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
-    // 微幅呼吸透明度提升質感 (0.85 ~ 1.0)
-    ctx.globalAlpha = 0.85 + Math.sin(this.pulseTime) * 0.15;
-    ctx.strokeRect(px, py, CURSOR.BOX_SIZE, CURSOR.BOX_SIZE);
+    // 左上折角
+    ctx.beginPath();
+    ctx.moveTo(cx - r, cy - r + arm);
+    ctx.lineTo(cx - r, cy - r);
+    ctx.lineTo(cx - r + arm, cy - r);
+    ctx.stroke();
+
+    // 右上折角
+    ctx.beginPath();
+    ctx.moveTo(cx + r - arm, cy - r);
+    ctx.lineTo(cx + r, cy - r);
+    ctx.lineTo(cx + r, cy - r + arm);
+    ctx.stroke();
+
+    // 右下折角
+    ctx.beginPath();
+    ctx.moveTo(cx + r, cy + r - arm);
+    ctx.lineTo(cx + r, cy + r);
+    ctx.lineTo(cx + r - arm, cy + r);
+    ctx.stroke();
+
+    // 左下折角
+    ctx.beginPath();
+    ctx.moveTo(cx - r + arm, cy + r);
+    ctx.lineTo(cx - r, cy + r);
+    ctx.lineTo(cx - r, cy + r - arm);
+    ctx.stroke();
+
+    // 核心落子預覽微弱水墨淡暈
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(30, 40, 32, ${alpha * 0.7})`;
+    ctx.fill();
+
     ctx.restore();
   }
 }
