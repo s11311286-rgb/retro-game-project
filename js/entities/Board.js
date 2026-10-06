@@ -318,4 +318,71 @@ export class Board extends Entity {
 
     ctx.restore();
   }
+
+  /**
+   * 繪製 AI 游標：一個滑動的白色發光圓環，模擬真人手指移到落子位置
+   * @param {CanvasRenderingContext2D} ctx
+   * @param {number} gridX  浮點格座標 X（支援插值位置）
+   * @param {number} gridY  浮點格座標 Y
+   * @param {number} pulseT 動畫計時器
+   * @param {boolean} isArrived 是否已到達目標格（顯示落子前停頓動畫）
+   */
+  renderAICursor(ctx, gridX, gridY, pulseT, isArrived) {
+    const { OFFSET, CELL_SIZE } = GRID_CONFIG;
+    const px = OFFSET + gridX * CELL_SIZE;
+    const py = OFFSET + gridY * CELL_SIZE;
+
+    // 呼吸值：移動中微幅脈動，到達後強烈脈動
+    const beatSpeed = isArrived ? 8 : 3;
+    const beat = 0.5 + Math.sin(pulseT * beatSpeed) * 0.5;
+
+    ctx.save();
+
+    // 1. 外層大光暈（到達時明顯擴張）
+    const glowR = isArrived ? 20 + beat * 6 : 18;
+    const glowAlpha = isArrived ? 0.18 + beat * 0.2 : 0.12;
+    const glowGrad = ctx.createRadialGradient(px, py, 0, px, py, glowR);
+    glowGrad.addColorStop(0, `rgba(220, 230, 255, ${glowAlpha})`);
+    glowGrad.addColorStop(1, 'rgba(180, 200, 255, 0)');
+    ctx.beginPath();
+    ctx.arc(px, py, glowR, 0, Math.PI * 2);
+    ctx.fillStyle = glowGrad;
+    ctx.fill();
+
+    // 2. 主圓環（移動中為細環，到達時加粗並呼吸縮放）
+    const ringR = isArrived ? 13 + beat * 3 : 12;
+    ctx.beginPath();
+    ctx.arc(px, py, ringR, 0, Math.PI * 2);
+    ctx.strokeStyle = isArrived
+      ? `rgba(255, 255, 220, ${0.7 + beat * 0.3})`
+      : 'rgba(220, 220, 255, 0.75)';
+    ctx.lineWidth = isArrived ? 2.5 : 1.8;
+    ctx.stroke();
+
+    // 3. 內環（到達時才顯示）
+    if (isArrived) {
+      ctx.beginPath();
+      ctx.arc(px, py, 7 + beat * 2, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255, 255, 180, ${0.5 + beat * 0.4})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // 4. 中心小點（十字準心感）
+    ctx.beginPath();
+    ctx.arc(px, py, isArrived ? 2 + beat : 2, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${isArrived ? 0.7 + beat * 0.3 : 0.6})`;
+    ctx.fill();
+
+    // 5. 移動中顯示小十字線（方向感）
+    if (!isArrived) {
+      const arm = 5;
+      ctx.strokeStyle = 'rgba(200, 210, 255, 0.5)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(px - arm, py); ctx.lineTo(px + arm, py); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px, py - arm); ctx.lineTo(px, py + arm); ctx.stroke();
+    }
+
+    ctx.restore();
+  }
 }

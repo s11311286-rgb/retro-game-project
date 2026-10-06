@@ -60,6 +60,7 @@ export class Game {
     this.score = 0;
     this.highScore = Number(localStorage.getItem(STORAGE_KEYS.HIGH_SCORE)) || 0;
     this.aiTimeoutId = null;
+    this.aiCursor    = null;   // AI 游標動畫狀態
 
     // 綁定輸入處理器
     this.inputHandler = new InputHandler(this.canvas, {
@@ -138,6 +139,7 @@ export class Game {
     this.board.reset();
     this.player.reset();
     this.particleSystem.clear();
+    this.aiCursor = null;
 
     this.status = GAME_STATUS.PLAYING;
     this.isPlayerTurn = true;
@@ -247,7 +249,7 @@ export class Game {
   }
 
   /**
-   * 執行電腦 AI 落子決策（套用當前難度策略）
+   * 電腦 AI 思考完畢 → 建立游標動畫，讓 AI 像真人一樣移動到落子位置
    */
   executeAIMove() {
     if (this.status !== GAME_STATUS.PLAYING) return;
@@ -258,15 +260,123 @@ export class Game {
       return;
     }
 
-    // 1. 放置白棋並記錄最後一手
+    // 計算游標動畫起點（上一手落子位置，或棋盤中央）
+    const last = this.board.lastMove;
+    const startX = last ? last.x : 7;
+    const startY = last ? last.y : 7;
+
+    // 建立途徑點（EASY 會多繞幾個位置，NORMAL/HARD 直接移動）
+    const waypoints = this._buildAIWaypoints(
+      { x: startX, y: startY },
+      { x: move.x, y: move.y }
+    );
+
+    // 每段移動時間（依難度調整速度感）
+    const segMs = { EASY: 340, NORMAL: 240, HARD: 160 };
+    const segDur = (segMs[this.currentDifficultyId] || 240) / 1000;
+
+    // 落子前停頓時間
+    const pauseMs = { EASY: 320, NORMAL: 220, HARD: 120 };
+    const pauseDur = (pauseMs[this.currentDifficultyId] || 220) / 1000;
+
+    this.aiCursor = {
+      waypoints,
+      wpIdx:        0,
+      elapsed:      0,
+      segDuration:  segDur,
+      curX:         startX,
+      curY:         startY,
+      pausing:      false,
+      pauseElapsed: 0,
+      pauseDuration: pauseDur,
+      move,
+    };
+  }
+
+  /**
+   * 建立 AI 游標路徑點
+   * EASY：在目標附近多繞 1~2 個空格（看起來在猶豫）
+   * NORMAL / HARD：直線移動
+   */
+  _buildAIWaypoints(start, target) {
+    const waypoints = [start];
+
+    if (this.currentDifficultyId === 'EASY') {
+      // 隨機挑 1~2 個目標附近空格當中途點
+      const candidates = [];
+      for (let dy = -5; dy <= 5; dy++) {
+        for (let dx = -5; dx <= 5; dx++) {
+          const x = target.x + dx;
+          const y = target.y + dy;
+          if (x >= 0 && x < 15 && y >= 0 && y < 15 &&
+              this.board.isEmpty(x, y) &&
+              !(x === target.x && y === target.y)) {
+            candidates.push({ x, y });
+          }
+        }
+      }
+      // 最多加 2 個中途點
+      const count = 1 + Math.floor(Math.random() * 2);
+      for (let i = 0; i < count && candidates.length > 0; i++) {
+        const idx = Math.floor(Math.random() * candidates.length);
+        waypoints.push(candidates.splice(idx, 1)[0]);
+      }
+    }
+
+    waypoints.push(target);
+    return waypoints;
+  }
+
+  /**
+   * 每幀更新 AI 游標動畫
+   */
+  _updateAICursor(dt) {
+    if (!this.aiCursor || this.status !== GAME_STATUS.PLAYING) return;
+    const c = this.aiCursor;
+
+    if (c.pausing) {
+      c.pauseElapsed += dt;
+      if (c.pauseElapsed >= c.pauseDuration) {
+        this._finalizeAIMove(c.move);
+        this.aiCursor = null;
+      }
+      return;
+    }
+
+    c.elapsed += dt;
+    const t    = Math.min(1, c.elapsed / c.segDuration);
+    const ease = this._easeInOut(t);
+
+    const from = c.waypoints[c.wpIdx];
+    const to   = c.waypoints[c.wpIdx + 1];
+    c.curX = from.x + (to.x - from.x) * ease;
+    c.curY = from.y + (to.y - from.y) * ease;
+
+    if (t >= 1) {
+      c.wpIdx++;
+      c.elapsed = 0;
+      if (c.wpIdx >= c.waypoints.length - 1) {
+        // 到達目標格，開始落子前停頓
+        c.curX   = to.x;
+        c.curY   = to.y;
+        c.pausing = true;
+        c.pauseElapsed = 0;
+      }
+    }
+  }
+
+  /**
+   * 實際放置白棋、播放音效、觸發特效、判斷勝負
+   */
+  _finalizeAIMove(move) {
+    if (this.status !== GAME_STATUS.PLAYING) return;
+
     this.board.setPiece(move.x, move.y, PIECE_TYPE.WHITE);
     this.audio.playMoveSound(false);
 
-    // 2. 觸發落子微粒反饋
     const pos = Physics.gridToCanvas(move.x, move.y);
     this.particleSystem.emitPlacement(pos.x, pos.y, false);
 
-    // 3. 勝負檢定
     if (Physics.checkWin(this.board, move.x, move.y, PIECE_TYPE.WHITE)) {
       const line = Physics.getWinningLine(this.board, move.x, move.y, PIECE_TYPE.WHITE);
       this.board.setWinLine(line);
@@ -280,9 +390,13 @@ export class Game {
       return;
     }
 
-    // 4. 切換回玩家回合
     this.isPlayerTurn = true;
     this.hud.updateTurn(TURN_STATE.PLAYER);
+  }
+
+  /** 緩入緩出插值 (t: 0→1) */
+  _easeInOut(t) {
+    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
   }
 
   /**
@@ -310,6 +424,7 @@ export class Game {
     this.board.update(dt);
     this.player.update(dt);
     this.particleSystem.update(dt);
+    this._updateAICursor(dt);
   }
 
   /**
@@ -320,6 +435,17 @@ export class Game {
 
     // 繪製棋盤、格線、棋子、最後一手標記與勝利連線
     this.board.render(this.ctx);
+
+    // 繪製 AI 游標（AI 落子動畫中才顯示）
+    if (this.aiCursor) {
+      this.board.renderAICursor(
+        this.ctx,
+        this.aiCursor.curX,
+        this.aiCursor.curY,
+        this.board.pulseTimer,
+        this.aiCursor.pausing
+      );
+    }
 
     // 繪製玩家選取框
     const isEnded = this.status !== GAME_STATUS.PLAYING;
