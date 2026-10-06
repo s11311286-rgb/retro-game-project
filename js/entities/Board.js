@@ -157,7 +157,7 @@ export class Board extends Entity {
   }
 
   /**
-   * 繪製單枚棋子（水墨墨錠與溫潤玉石質感）
+   * 繪製單枚棋子（清爽溫潤的墨玉與白玉質感，無多餘外圈霧影）
    * @private
    */
   _renderPiece(ctx, x, y, pieceType) {
@@ -171,30 +171,20 @@ export class Board extends Entity {
 
     ctx.save();
 
-    // 1. 水墨在宣紙的自然滲墨外圈（墨暈邊緣）
-    const bleedColor = isPlayer ? 'rgba(15, 20, 16, 0.28)' : 'rgba(235, 225, 195, 0.35)';
-    const bleedGrad = ctx.createRadialGradient(px, py, r * 0.7, px, py, r * 1.35);
-    bleedGrad.addColorStop(0, bleedColor);
-    bleedGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.beginPath();
-    ctx.arc(px, py, r * 1.35, 0, Math.PI * 2);
-    ctx.fillStyle = bleedGrad;
-    ctx.fill();
-
-    // 2. 棋子主體（黑棋如油煙墨錠，白棋如羊脂素玉）
+    // 棋子主體（黑棋如堅實徽墨墨錠，白棋如羊脂玉）
     const hiX = px - r * 0.32;
     const hiY = py - r * 0.32;
     const grad = ctx.createRadialGradient(hiX, hiY, r * 0.08, px, py, r);
     if (isPlayer) {
-      grad.addColorStop(0, '#3a443e'); // 墨頂微光
-      grad.addColorStop(0.35, '#1b221d'); // 濃墨
-      grad.addColorStop(0.85, '#0a0d0b'); // 焦墨
-      grad.addColorStop(1, '#050705');
+      grad.addColorStop(0, '#3e4842'); // 墨頂微光
+      grad.addColorStop(0.35, '#1e2621'); // 濃墨
+      grad.addColorStop(0.85, '#0d120f'); // 焦墨
+      grad.addColorStop(1, '#080a08');
     } else {
       grad.addColorStop(0, '#ffffff'); // 白玉凝脂
       grad.addColorStop(0.4, '#ede6ce');
-      grad.addColorStop(0.85, '#d3c9aa');
-      grad.addColorStop(1, '#b5ab8d'); // 宣紙雅灰
+      grad.addColorStop(0.85, '#d5caa9');
+      grad.addColorStop(1, '#b8ad8f');
     }
 
     ctx.beginPath();
@@ -202,12 +192,12 @@ export class Board extends Entity {
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // 3. 仿手工雕琢自然墨玉輪廓
-    ctx.strokeStyle = isPlayer ? '#28322a' : '#8f866e';
+    // 清晰精緻的天然玉石輪廓線（乾淨俐落）
+    ctx.strokeStyle = isPlayer ? '#222b24' : '#887f66';
     ctx.lineWidth = 1.6;
     ctx.stroke();
 
-    // 4. 水墨反光微光斑
+    // 棋面清爽高光
     const hlGrad = ctx.createRadialGradient(hiX, hiY, 0, hiX, hiY, r * 0.4);
     hlGrad.addColorStop(0, isPlayer ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.7)');
     hlGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
@@ -220,7 +210,7 @@ export class Board extends Entity {
   }
 
   /**
-   * 繪製最後一手提示（古典硃砂印記與水墨朱紅暈染）
+   * 繪製最後一手提示（精緻硃砂印記，乾淨醒目）
    * @private
    */
   _renderLastMoveMarker(ctx, x, y, type) {
@@ -230,38 +220,29 @@ export class Board extends Entity {
 
     ctx.save();
     const isPlayer = type === PIECE_TYPE.BLACK;
-    // 硃砂朱紅（古書畫印泥色澤）
-    const cinnabar = isPlayer ? 'rgba(196, 44, 30,' : 'rgba(176, 36, 24,';
-    const pulse = 0.5 + Math.sin(this.pulseTimer * 3) * 0.5;
+    const cinnabar = isPlayer ? '#c23022' : '#ac2418';
+    const pulse = 0.5 + Math.sin(this.pulseTimer * 3.5) * 0.5;
 
-    // 1. 外圍硃砂淡墨呼吸暈（微宣紙擴散）
-    const haloR = 12 + pulse * 4;
-    const haloGrad = ctx.createRadialGradient(px, py, 4, px, py, haloR);
-    haloGrad.addColorStop(0, `${cinnabar} ${0.35 + pulse * 0.25})`);
-    haloGrad.addColorStop(1, `${cinnabar} 0)`);
+    // 1. 清爽的硃砂細環（呼吸律動）
     ctx.beginPath();
-    ctx.arc(px, py, haloR, 0, Math.PI * 2);
-    ctx.fillStyle = haloGrad;
-    ctx.fill();
-
-    // 2. 硃砂古印外框（中式古典圓形小印紋）
-    ctx.beginPath();
-    ctx.arc(px, py, 7.5 + pulse * 1.5, 0, Math.PI * 2);
-    ctx.strokeStyle = `${cinnabar} ${0.85 + pulse * 0.15})`;
-    ctx.lineWidth = 1.6;
+    ctx.arc(px, py, 8.5 + pulse * 2.2, 0, Math.PI * 2);
+    ctx.strokeStyle = cinnabar;
+    ctx.lineWidth = 1.8;
+    ctx.globalAlpha = 0.85 + pulse * 0.15;
     ctx.stroke();
 
-    // 3. 中心硃砂落款點
+    // 2. 中心硃砂落款點
     ctx.beginPath();
-    ctx.arc(px, py, 2.8, 0, Math.PI * 2);
-    ctx.fillStyle = `${cinnabar} 0.95)`;
+    ctx.arc(px, py, 3, 0, Math.PI * 2);
+    ctx.fillStyle = cinnabar;
+    ctx.globalAlpha = 0.95;
     ctx.fill();
 
     ctx.restore();
   }
 
   /**
-   * 繪製五子連線（毛筆揮毫濃淡水墨連貫筆鋒）
+   * 繪製五子連線（蒼勁書法墨線與硃砂貫通，線條俐落非煙霧）
    * @private
    */
   _renderWinningLine(ctx, line) {
@@ -274,122 +255,82 @@ export class Board extends Entity {
     const ex = OFFSET + end.x   * CELL_SIZE;
     const ey = OFFSET + end.y   * CELL_SIZE;
 
-    const pulse = 0.5 + Math.sin(this.pulseTimer * 2.2) * 0.5;
+    const pulse = 0.5 + Math.sin(this.pulseTimer * 3) * 0.5;
 
     ctx.save();
 
-    // 1. 最外層淡墨暈染（水墨在生宣上迅速透化的墨韻）
+    // 1. 書法主幹：蒼勁深墨一筆貫穿
     ctx.beginPath();
     ctx.moveTo(sx, sy);
     ctx.lineTo(ex, ey);
-    ctx.strokeStyle = `rgba(18, 25, 20, ${0.16 + pulse * 0.12})`;
-    ctx.lineWidth = 26;
+    ctx.strokeStyle = `rgba(18, 24, 20, ${0.85 + pulse * 0.15})`;
+    ctx.lineWidth = 5;
     ctx.lineCap = 'round';
     ctx.stroke();
 
-    // 2. 次層水墨濕筆觸
+    // 2. 硃砂紅心細線提氣（紅白相映）
     ctx.beginPath();
     ctx.moveTo(sx, sy);
     ctx.lineTo(ex, ey);
-    ctx.strokeStyle = `rgba(32, 42, 35, ${0.45 + pulse * 0.2})`;
-    ctx.lineWidth = 14;
+    ctx.strokeStyle = `rgba(215, 55, 38, ${0.8 + pulse * 0.2})`;
+    ctx.lineWidth = 2.2;
     ctx.lineCap = 'round';
     ctx.stroke();
 
-    // 3. 書法主幹：蒼勁焦墨一筆貫穿
-    ctx.beginPath();
-    ctx.moveTo(sx, sy);
-    ctx.lineTo(ex, ey);
-    ctx.strokeStyle = `rgba(12, 16, 13, ${0.85 + pulse * 0.15})`;
-    ctx.lineWidth = 4.5;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-
-    // 4. 書法飛白與硃砂雙色印氣：貫穿五子的硃砂朱線提氣
-    ctx.beginPath();
-    ctx.moveTo(sx, sy);
-    ctx.lineTo(ex, ey);
-    ctx.strokeStyle = `rgba(215, 60, 42, ${0.4 + pulse * 0.4})`;
-    ctx.lineWidth = 1.8;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-
-    // 5. 連線每顆棋子外圈的水墨朱文古印環
+    // 3. 連線每顆棋子外圈的精緻硃砂印環
     line.forEach(({ x, y }) => {
       const px = OFFSET + x * CELL_SIZE;
       const py = OFFSET + y * CELL_SIZE;
 
-      // 宣紙墨暈外環
       ctx.beginPath();
-      ctx.arc(px, py, THEME.PIECE_RADIUS + 4 + pulse * 3, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(200, 48, 35, ${0.6 + pulse * 0.35})`;
+      ctx.arc(px, py, THEME.PIECE_RADIUS + 3.5 + pulse * 2, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(210, 48, 35, ${0.75 + pulse * 0.25})`;
       ctx.lineWidth = 2;
       ctx.stroke();
-
-      // 棋心淡淡墨色聚氣
-      const grd = ctx.createRadialGradient(px, py, 0, px, py, THEME.PIECE_RADIUS + 8);
-      grd.addColorStop(0, `rgba(210, 50, 36, ${0.22 + pulse * 0.18})`);
-      grd.addColorStop(1, 'rgba(18, 25, 20, 0)');
-      ctx.beginPath();
-      ctx.arc(px, py, THEME.PIECE_RADIUS + 8, 0, Math.PI * 2);
-      ctx.fillStyle = grd;
-      ctx.fill();
     });
 
     ctx.restore();
   }
 
   /**
-   * 繪製 AI 游標（古風懸空毛筆提筆點墨、墨滴探位意境）
+   * 繪製 AI 游標（清爽乾淨的提筆探位墨線圈）
    * @param {CanvasRenderingContext2D} ctx
    * @param {number} gridX  浮點格座標 X
    * @param {number} gridY  浮點格座標 Y
    * @param {number} pulseT 動畫計時器
-   * @param {boolean} isArrived 是否已到達目標格（欲點墨頓筆）
+   * @param {boolean} isArrived 是否已到達目標格
    */
   renderAICursor(ctx, gridX, gridY, pulseT, isArrived) {
     const { OFFSET, CELL_SIZE } = GRID_CONFIG;
     const px = OFFSET + gridX * CELL_SIZE;
     const py = OFFSET + gridY * CELL_SIZE;
 
-    const beatSpeed = isArrived ? 7 : 3;
+    const beatSpeed = isArrived ? 8 : 3.5;
     const beat = 0.5 + Math.sin(pulseT * beatSpeed) * 0.5;
 
     ctx.save();
 
-    // 1. 提筆懸空的淡淡水墨水氣
-    const mistR = isArrived ? 22 + beat * 6 : 16;
-    const mistGrad = ctx.createRadialGradient(px, py, 2, px, py, mistR);
-    mistGrad.addColorStop(0, isArrived ? `rgba(215, 60, 40, ${0.28 + beat * 0.2})` : 'rgba(40, 50, 42, 0.22)');
-    mistGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.beginPath();
-    ctx.arc(px, py, mistR, 0, Math.PI * 2);
-    ctx.fillStyle = mistGrad;
-    ctx.fill();
-
-    // 2. 懸停墨圈（到達時轉為硃砂欲點之色）
-    const ringR = isArrived ? 12 + beat * 3 : 11;
+    // 1. 懸停墨圈（移動中清爽細線，到位時轉為醒目硃砂印圈）
+    const ringR = isArrived ? 12 + beat * 2.5 : 11;
     ctx.beginPath();
     ctx.arc(px, py, ringR, 0, Math.PI * 2);
     ctx.strokeStyle = isArrived
-      ? `rgba(205, 45, 32, ${0.75 + beat * 0.25})`
-      : 'rgba(38, 50, 42, 0.7)';
+      ? `rgba(210, 45, 30, ${0.85 + beat * 0.15})`
+      : 'rgba(38, 50, 42, 0.8)';
     ctx.lineWidth = isArrived ? 2.2 : 1.6;
     ctx.stroke();
 
-    // 3. 毛筆筆鋒水滴形核心墨點
-    const dropR = isArrived ? 3.5 + beat * 1.5 : 2.5;
+    // 2. 清脆筆鋒核心小點
+    const dropR = isArrived ? 3 + beat : 2.2;
     ctx.beginPath();
     ctx.arc(px, py, dropR, 0, Math.PI * 2);
-    ctx.fillStyle = isArrived
-      ? `rgba(185, 35, 25, ${0.85 + beat * 0.15})`
-      : 'rgba(20, 26, 22, 0.85)';
+    ctx.fillStyle = isArrived ? '#c52e20' : '#1c241f';
     ctx.fill();
 
-    // 4. 移動中的毛筆行筆虛線微痕
+    // 3. 移動中的毛筆行筆指針微痕
     if (!isArrived) {
       const arm = 6;
-      ctx.strokeStyle = 'rgba(45, 58, 48, 0.45)';
+      ctx.strokeStyle = 'rgba(40, 52, 44, 0.6)';
       ctx.lineWidth = 1.2;
       ctx.beginPath(); ctx.moveTo(px - arm, py); ctx.lineTo(px + arm, py); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(px, py - arm); ctx.lineTo(px, py + arm); ctx.stroke();

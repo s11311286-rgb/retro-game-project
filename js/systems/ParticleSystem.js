@@ -1,199 +1,174 @@
 /**
  * js/systems/ParticleSystem.js
- * 水墨風粒子系統：濃淡墨暈擴散、墨汁飛濺、水墨飛花與飄墨雅緻特效
+ * 清爽水墨風粒子系統：
+ * 告別模糊厚重煙霧，採用靈動俐落的水墨筆意漣漪、飛濺墨珠與瀟灑的揮毫迴旋筆觸
  */
 
 export class ParticleSystem {
   constructor() {
-    this.inkBlooms   = []; // 墨暈擴散層（水墨浸潤宣紙）
-    this.splashes    = []; // 墨點飛濺
-    this.inkMists    = []; // 墨氣升騰
-    this.floatingInk = []; // 勝利飄落的水墨飛絮與硃砂墨花
+    this.ripples    = []; // 靈動水墨漣漪線圈（通透細線，絕不糊成一坨霧）
+    this.droplets   = []; // 清脆乾淨的小墨珠（微粒飛濺）
+    this.brushArcs  = []; // 勝利時的書法揮毫水墨弧光（筆走龍蛇）
+    this.petals     = []; // 勝利飄落的硃砂梅花瓣
   }
 
-  /** 重設並清空所有水墨特效 */
+  /** 重設並清空所有特效 */
   clear() {
-    this.inkBlooms   = [];
-    this.splashes    = [];
-    this.inkMists    = [];
-    this.floatingInk = [];
+    this.ripples   = [];
+    this.droplets  = [];
+    this.brushArcs = [];
+    this.petals    = [];
   }
 
   // ─────────────────────────────────────────────
-  // 落子反饋：水墨暈染 + 筆墨飛濺
+  // 落子反饋：清爽水墨漣漪 + 靈動小墨珠
   // ─────────────────────────────────────────────
   /**
-   * 落子水墨綻放反饋
+   * 落子水墨反饋（乾淨、俐落、不髒棋盤）
    * @param {number} x  畫布像素 X
    * @param {number} y  畫布像素 Y
-   * @param {boolean} isPlayer  是否為玩家黑棋（黑棋濃墨，白棋淡玉墨霜）
+   * @param {boolean} isPlayer  是否為玩家黑棋
    */
   emitPlacement(x, y, isPlayer) {
     if (isPlayer) {
-      // 玩家黑棋：濃墨浸染、焦墨飛濺
-      // 1. 三層濃淡不同的水墨暈染波
-      this._addInkBloom(x, y, 6, 26, 'rgba(18, 24, 20, 0.75)', 0.45);
-      this._addInkBloom(x, y, 10, 42, 'rgba(38, 48, 42, 0.45)', 0.65);
-      this._addInkBloom(x, y, 14, 58, 'rgba(60, 72, 64, 0.22)', 0.85);
+      // 玩家黑棋：深墨與青黛漣漪
+      // 內圈細緻水墨環（迅速擴散）
+      this._addRipple(x, y, 6, 24, 'rgba(20, 26, 22,', 2.0, 0.28);
+      // 外圈飄逸微波環（稍慢淡出）
+      this._addRipple(x, y, 10, 36, 'rgba(40, 52, 44,', 1.2, 0.42);
 
-      // 2. 墨滴飛濺（毛筆落紙時細微的濺墨點）
-      const count = 16;
+      // 精巧的小墨珠（6~8 顆，小半徑，不糊在一起）
+      const count = 7;
       for (let i = 0; i < count; i++) {
-        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.7;
-        const speed = 25 + Math.random() * 65;
-        this.splashes.push({
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+        const speed = 35 + Math.random() * 45;
+        this.droplets.push({
           x, y,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
-          radius: 1.5 + Math.random() * 2.8,
-          color: Math.random() > 0.3 ? '#151c17' : '#2b382f',
+          radius: 1.2 + Math.random() * 1.5,
+          color: '#1a221d',
           alpha: 0.9,
-          maxLife: 0.4 + Math.random() * 0.3,
-          life: 0.4 + Math.random() * 0.3,
-          friction: 0.92,
-        });
-      }
-
-      // 3. 幾團輕柔的水墨輕煙霧
-      for (let i = 0; i < 6; i++) {
-        this.inkMists.push({
-          x: x + (Math.random() - 0.5) * 12,
-          y: y + (Math.random() - 0.5) * 12,
-          vx: (Math.random() - 0.5) * 10,
-          vy: -8 - Math.random() * 12, // 緩緩向上飄散
-          radius: 8 + Math.random() * 12,
-          maxRadius: 22 + Math.random() * 10,
-          color: 'rgba(28, 36, 30,',
-          alpha: 0.35,
-          maxLife: 0.7,
-          life: 0.7,
+          maxLife: 0.35,
+          life: 0.35,
+          friction: 0.91,
         });
       }
     } else {
-      // 電腦白棋：素白霜墨、白玉氣韻、淡金墨光
-      this._addInkBloom(x, y, 6, 28, 'rgba(240, 235, 215, 0.85)', 0.45);
-      this._addInkBloom(x, y, 12, 45, 'rgba(220, 212, 185, 0.45)', 0.65);
-      this._addInkBloom(x, y, 16, 56, 'rgba(195, 185, 155, 0.25)', 0.85);
+      // 電腦白棋：淡雅白玉微瀾
+      this._addRipple(x, y, 6, 24, 'rgba(245, 240, 225,', 2.0, 0.28);
+      this._addRipple(x, y, 10, 36, 'rgba(215, 205, 180,', 1.2, 0.42);
 
-      const count = 14;
+      const count = 6;
       for (let i = 0; i < count; i++) {
-        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.6;
-        const speed = 25 + Math.random() * 60;
-        this.splashes.push({
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+        const speed = 30 + Math.random() * 40;
+        this.droplets.push({
           x, y,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
-          radius: 1.5 + Math.random() * 2.5,
-          color: Math.random() > 0.4 ? '#f5f0dc' : '#d8cfb0',
+          radius: 1.2 + Math.random() * 1.4,
+          color: '#f0ebd8',
           alpha: 0.9,
-          maxLife: 0.4 + Math.random() * 0.3,
-          life: 0.4 + Math.random() * 0.3,
-          friction: 0.92,
-        });
-      }
-
-      for (let i = 0; i < 5; i++) {
-        this.inkMists.push({
-          x: x + (Math.random() - 0.5) * 10,
-          y: y + (Math.random() - 0.5) * 10,
-          vx: (Math.random() - 0.5) * 8,
-          vy: -6 - Math.random() * 10,
-          radius: 7 + Math.random() * 10,
-          maxRadius: 20 + Math.random() * 8,
-          color: 'rgba(245, 240, 225,',
-          alpha: 0.4,
-          maxLife: 0.65,
-          life: 0.65,
+          maxLife: 0.35,
+          life: 0.35,
+          friction: 0.91,
         });
       }
     }
   }
 
   // ─────────────────────────────────────────────
-  // 勝利慶祝：大氣潑墨揮毫 + 硃砂落花飛雨
+  // 勝利慶祝：書法揮毫弧光 + 硃砂落英
   // ─────────────────────────────────────────────
   /**
-   * 勝利水墨大賞：潑墨重彩、宣紙浸潤擴散與飄落水墨硃砂
+   * 勝利水墨筆意：瀟灑水墨書法行筆弧線 + 清麗硃砂小花瓣
    * @param {number} cx  中心 X
    * @param {number} cy  中心 Y
    * @param {number} canvasW  畫布寬度
    */
   emitWin(cx, cy, canvasW = 620) {
-    // 1. 三波蒼勁大氣的潑墨暈染
-    const splashWaves = [
-      { color: 'rgba(15, 20, 16, 0.75)',  rMax: 90,  dur: 1.2, delay: 0 },
-      { color: 'rgba(180, 40, 30, 0.65)', rMax: 70,  dur: 1.0, delay: 0.2 }, // 硃砂紅
-      { color: 'rgba(40, 52, 44, 0.5)',   rMax: 110, dur: 1.5, delay: 0.4 },
-    ];
-
-    splashWaves.forEach((wave) => {
-      this._addInkBloom(
-        cx + (Math.random() - 0.5) * 50,
-        cy + (Math.random() - 0.5) * 50,
-        15, wave.rMax, wave.color, wave.dur, wave.delay
-      );
-    });
-
-    // 2. 潑墨四散的粗獷水墨珠滴
-    for (let i = 0; i < 70; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 40 + Math.random() * 140;
-      const isVermilion = Math.random() < 0.28; // 28% 幾率為硃砂印泥紅
-
-      this.splashes.push({
-        x: cx + (Math.random() - 0.5) * 30,
-        y: cy + (Math.random() - 0.5) * 30,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 20,
-        radius: 2 + Math.random() * 4.5,
-        color: isVermilion ? '#b83226' : (Math.random() > 0.4 ? '#121614' : '#28332b'),
-        alpha: 0.95,
-        maxLife: 0.8 + Math.random() * 0.7,
-        life: 0.8 + Math.random() * 0.7,
-        friction: 0.94,
-        gravity: 60,
+    // 1. 書法揮毫弧線（如狂草行筆，乾淨大氣）
+    for (let i = 0; i < 6; i++) {
+      const startAngle = Math.random() * Math.PI * 2;
+      const sweep = (Math.PI * 0.6) + Math.random() * Math.PI * 0.6;
+      const isVermilion = i % 2 === 1; // 硃砂與墨色交織
+      this.brushArcs.push({
+        x: cx + (Math.random() - 0.5) * 40,
+        y: cy + (Math.random() - 0.5) * 40,
+        radius: 20 + Math.random() * 15,
+        maxRadius: 65 + Math.random() * 40,
+        startAngle,
+        endAngle: startAngle + sweep,
+        color: isVermilion ? 'rgba(195, 45, 30,' : 'rgba(22, 28, 24,',
+        lineWidth: 2.5 + Math.random() * 2,
+        duration: 0.7 + Math.random() * 0.4,
+        elapsed: 0,
+        delay: i * 0.1,
       });
     }
 
-    // 3. 漫天飄散的古風水墨花瓣與飛絮 (50 枚飄花)
-    const petals = ['#1d2420', '#2d3830', '#c23b2b', '#8c2419', '#ded7bc', '#b3392b'];
-    for (let i = 0; i < 50; i++) {
-      this.floatingInk.push({
+    // 2. 核心大水墨漣漪
+    this._addRipple(cx, cy, 10, 85, 'rgba(25, 32, 28,', 2.5, 0.85);
+    this._addRipple(cx, cy, 15, 60, 'rgba(195, 45, 30,', 2.0, 0.7, 0.15);
+
+    // 3. 少許精緻小墨珠濺開
+    for (let i = 0; i < 24; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 40 + Math.random() * 90;
+      const isRed = Math.random() < 0.35;
+      this.droplets.push({
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        radius: 1.5 + Math.random() * 2,
+        color: isRed ? '#ba2d20' : '#1a221d',
+        alpha: 0.95,
+        maxLife: 0.6 + Math.random() * 0.4,
+        life: 0.6 + Math.random() * 0.4,
+        friction: 0.93,
+        gravity: 40,
+      });
+    }
+
+    // 4. 清雅舒緩飄落的硃砂小梅瓣（優雅不擁擠）
+    const petalColors = ['#c23b2b', '#d34535', '#a8261a', '#e8dfc8'];
+    for (let i = 0; i < 28; i++) {
+      this.petals.push({
         x: Math.random() * canvasW,
-        y: -20 - Math.random() * 120,
-        vx: (Math.random() - 0.5) * 45,
-        vy: 35 + Math.random() * 60,
-        w: 5 + Math.random() * 7,
-        h: 3 + Math.random() * 5,
+        y: -15 - Math.random() * 80,
+        vx: (Math.random() - 0.5) * 35,
+        vy: 30 + Math.random() * 45,
+        w: 4 + Math.random() * 4,
+        h: 2.5 + Math.random() * 2.5,
         angle: Math.random() * Math.PI * 2,
-        spin: (Math.random() - 0.5) * 3.5,
-        color: petals[Math.floor(Math.random() * petals.length)],
+        spin: (Math.random() - 0.5) * 3,
+        color: petalColors[Math.floor(Math.random() * petalColors.length)],
         alpha: 0.9,
-        life: 2.0 + Math.random() * 1.5,
-        maxLife: 3.5,
-        swaySpeed: 1.5 + Math.random() * 2,
-        swayRange: 15 + Math.random() * 20,
-        spawnDelay: Math.random() * 0.6,
+        life: 2.2 + Math.random() * 1.2,
+        maxLife: 3.4,
+        swaySpeed: 1.5 + Math.random() * 1.5,
+        swayRange: 12 + Math.random() * 16,
+        delay: Math.random() * 0.4,
       });
     }
   }
 
   // ─────────────────────────────────────────────
-  // 內部墨暈生成
+  // 內部輔助：水墨漣漪生成（只用 stroke 畫清爽細線，不填滿色塊）
   // ─────────────────────────────────────────────
-  _addInkBloom(x, y, startR, maxR, color, duration, delay = 0) {
-    this.inkBlooms.push({
+  _addRipple(x, y, startR, maxR, colorPrefix, lineWidth, duration, delay = 0) {
+    this.ripples.push({
       x,
       y,
       radius: startR,
       startR,
       maxR,
-      color,
+      colorPrefix,
+      lineWidth,
       duration,
       elapsed: 0,
       delay,
-      // 隨機八邊形微調參數，營造毛筆墨汁在紙纖維不規則暈開的自然紋路
-      points: Array.from({ length: 10 }, () => 0.82 + Math.random() * 0.36),
     });
   }
 
@@ -201,72 +176,75 @@ export class ParticleSystem {
   // 逐幀邏輯更新
   // ─────────────────────────────────────────────
   update(dt) {
-    // 1. 更新水墨暈染波
-    for (let i = this.inkBlooms.length - 1; i >= 0; i--) {
-      const b = this.inkBlooms[i];
-      if (b.delay > 0) {
-        b.delay -= dt;
+    // 1. 水墨漣漪更新
+    for (let i = this.ripples.length - 1; i >= 0; i--) {
+      const r = this.ripples[i];
+      if (r.delay > 0) {
+        r.delay -= dt;
         continue;
       }
-      b.elapsed += dt;
-      const progress = b.elapsed / b.duration;
+      r.elapsed += dt;
+      const progress = r.elapsed / r.duration;
       if (progress >= 1) {
-        this.inkBlooms.splice(i, 1);
+        this.ripples.splice(i, 1);
         continue;
       }
-      // 墨暈擴散初期快、後期慢（滲入宣紙的自然物理擴散曲線）
-      const ease = 1 - Math.pow(1 - progress, 2.4);
-      b.radius = b.startR + (b.maxR - b.startR) * ease;
-      b.alpha = (1 - progress) * 0.9;
+      // 緩出曲線：初期漣漪擴散清晰，後期自然隱沒
+      const ease = 1 - Math.pow(1 - progress, 2);
+      r.radius = r.startR + (r.maxR - r.startR) * ease;
+      r.alpha  = (1 - progress) * 0.85;
     }
 
-    // 2. 更新墨點飛濺
-    for (let i = this.splashes.length - 1; i >= 0; i--) {
-      const p = this.splashes[i];
+    // 2. 書法揮毫弧線更新
+    for (let i = this.brushArcs.length - 1; i >= 0; i--) {
+      const a = this.brushArcs[i];
+      if (a.delay > 0) {
+        a.delay -= dt;
+        continue;
+      }
+      a.elapsed += dt;
+      const progress = a.elapsed / a.duration;
+      if (progress >= 1) {
+        this.brushArcs.splice(i, 1);
+        continue;
+      }
+      const ease = 1 - Math.pow(1 - progress, 2);
+      a.curRadius = a.radius + (a.maxRadius - a.radius) * ease;
+      a.alpha = (1 - progress) * 0.85;
+    }
+
+    // 3. 墨珠更新
+    for (let i = this.droplets.length - 1; i >= 0; i--) {
+      const d = this.droplets[i];
+      d.life -= dt;
+      if (d.life <= 0) {
+        this.droplets.splice(i, 1);
+        continue;
+      }
+      d.x  += d.vx * dt;
+      d.y  += d.vy * dt;
+      d.vx *= d.friction;
+      d.vy *= d.friction;
+      if (d.gravity) d.vy += d.gravity * dt;
+      d.alpha = Math.max(0, d.life / d.maxLife);
+    }
+
+    // 4. 硃砂小花瓣更新
+    for (let i = this.petals.length - 1; i >= 0; i--) {
+      const p = this.petals[i];
+      if (p.delay > 0) {
+        p.delay -= dt;
+        continue;
+      }
       p.life -= dt;
       if (p.life <= 0) {
-        this.splashes.splice(i, 1);
+        this.petals.splice(i, 1);
         continue;
       }
-      p.x += p.vx * dt;
       p.y += p.vy * dt;
-      p.vx *= p.friction;
-      p.vy *= p.friction;
-      if (p.gravity) p.vy += p.gravity * dt;
-      p.alpha = Math.max(0, p.life / p.maxLife);
-    }
-
-    // 3. 更新墨氣薄霧
-    for (let i = this.inkMists.length - 1; i >= 0; i--) {
-      const m = this.inkMists[i];
-      m.life -= dt;
-      if (m.life <= 0) {
-        this.inkMists.splice(i, 1);
-        continue;
-      }
-      m.x += m.vx * dt;
-      m.y += m.vy * dt;
-      const p = 1 - (m.life / m.maxLife);
-      m.curRadius = m.radius + (m.maxRadius - m.radius) * p;
-      m.alpha = (1 - p) * 0.35;
-    }
-
-    // 4. 更新飄落水墨與硃砂花絮
-    for (let i = this.floatingInk.length - 1; i >= 0; i--) {
-      const c = this.floatingInk[i];
-      if (c.spawnDelay > 0) {
-        c.spawnDelay -= dt;
-        continue;
-      }
-      c.life -= dt;
-      if (c.life <= 0) {
-        this.floatingInk.splice(i, 1);
-        continue;
-      }
-      c.y += c.vy * dt;
-      c.x += Math.sin(c.life * c.swaySpeed) * c.swayRange * dt + c.vx * dt;
-      c.angle += c.spin * dt;
-      c.alpha = Math.min(1, (c.life / c.maxLife) * 1.4);
+      p.x += Math.sin(p.life * p.swaySpeed) * p.swayRange * dt + p.vx * dt;
+      p.angle += p.spin * dt;
+      p.alpha = Math.min(1, (p.life / p.maxLife) * 1.5);
     }
   }
 
@@ -275,73 +253,58 @@ export class ParticleSystem {
   // ─────────────────────────────────────────────
   render(ctx) {
     if (
-      this.inkBlooms.length === 0 &&
-      this.splashes.length === 0 &&
-      this.inkMists.length === 0 &&
-      this.floatingInk.length === 0
+      this.ripples.length === 0 &&
+      this.brushArcs.length === 0 &&
+      this.droplets.length === 0 &&
+      this.petals.length === 0
     ) {
       return;
     }
 
     ctx.save();
 
-    // 1. 繪製水墨暈染波（墨汁在宣紙滲透的不規則自然邊緣）
-    for (const b of this.inkBlooms) {
-      if (b.delay > 0) continue;
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, b.alpha);
-      ctx.fillStyle = b.color;
+    // 1. 繪製清爽的水墨漣漪線圈（用 stroke 勾勒，通透明朗）
+    for (const r of this.ripples) {
+      if (r.delay > 0) continue;
       ctx.beginPath();
-      const numPts = b.points.length;
-      for (let i = 0; i < numPts; i++) {
-        const theta = (Math.PI * 2 * i) / numPts;
-        const r = b.radius * b.points[i];
-        const px = b.x + Math.cos(theta) * r;
-        const py = b.y + Math.sin(theta) * r;
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
+      ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+      ctx.strokeStyle = `${r.colorPrefix} ${Math.max(0, r.alpha)})`;
+      ctx.lineWidth = r.lineWidth;
+      ctx.stroke();
+    }
+
+    // 2. 繪製書法行筆弧線（蒼勁有力，飛筆出鋒）
+    for (const a of this.brushArcs) {
+      if (a.delay > 0) continue;
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, a.curRadius, a.startAngle, a.endAngle);
+      ctx.strokeStyle = `${a.color} ${Math.max(0, a.alpha)})`;
+      ctx.lineWidth = a.lineWidth;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    // 3. 繪製精巧的小墨珠（圓潤分明）
+    for (const d of this.droplets) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, d.alpha);
+      ctx.fillStyle = d.color;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
 
-    // 2. 繪製墨氣升騰（柔和半透明水墨雲氣）
-    for (const m of this.inkMists) {
+    // 4. 繪製優雅硃砂花瓣
+    for (const p of this.petals) {
+      if (p.delay > 0) continue;
       ctx.save();
-      const rad = m.curRadius || m.radius;
-      const grad = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, rad);
-      grad.addColorStop(0, `${m.color}${m.alpha})`);
-      grad.addColorStop(1, `${m.color}0)`);
-      ctx.beginPath();
-      ctx.arc(m.x, m.y, rad, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // 3. 繪製墨點飛濺（毛筆點墨圓潤水墨滴）
-    for (const p of this.splashes) {
-      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
       ctx.globalAlpha = Math.max(0, p.alpha);
       ctx.fillStyle = p.color;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // 4. 繪製飄逸水墨飛絮與硃砂墨花（宛如墨染落櫻）
-    for (const c of this.floatingInk) {
-      if (c.spawnDelay > 0) continue;
-      ctx.save();
-      ctx.translate(c.x, c.y);
-      ctx.rotate(c.angle);
-      ctx.globalAlpha = Math.max(0, c.alpha);
-      ctx.fillStyle = c.color;
-      // 橢圓墨瓣
-      ctx.beginPath();
-      ctx.ellipse(0, 0, c.w, c.h, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, p.w, p.h, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
