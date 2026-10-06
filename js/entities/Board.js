@@ -157,7 +157,7 @@ export class Board extends Entity {
   }
 
   /**
-   * 繪製單枚棋子
+   * 繪製單枚棋子（帶放射漸層光暈）
    * @private
    */
   _renderPiece(ctx, x, y, pieceType) {
@@ -166,17 +166,55 @@ export class Board extends Entity {
 
     const px = OFFSET + x * CELL_SIZE;
     const py = OFFSET + y * CELL_SIZE;
+    const r  = PIECE_RADIUS;
     const isPlayer = pieceType === PIECE_TYPE.BLACK;
-    const style = isPlayer ? PLAYER_PIECE : AI_PIECE;
 
+    // 外部柔光環
+    const glowColor = isPlayer ? 'rgba(100,180,100,0.18)' : 'rgba(255,240,160,0.18)';
+    const glowGrad = ctx.createRadialGradient(px, py, r * 0.6, px, py, r * 1.6);
+    glowGrad.addColorStop(0, glowColor);
+    glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.beginPath();
-    ctx.arc(px, py, PIECE_RADIUS, 0, Math.PI * 2);
-    ctx.fillStyle = style.FILL;
+    ctx.arc(px, py, r * 1.6, 0, Math.PI * 2);
+    ctx.fillStyle = glowGrad;
     ctx.fill();
 
+    // 棋子主體（放射漸層）
+    const hiX = px - r * 0.28;
+    const hiY = py - r * 0.28;
+    const grad = ctx.createRadialGradient(hiX, hiY, r * 0.05, px, py, r);
+    if (isPlayer) {
+      grad.addColorStop(0, '#6a7a6a');
+      grad.addColorStop(0.4, '#2a2e2a');
+      grad.addColorStop(1, '#0d100d');
+    } else {
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.4, '#e0dcc8');
+      grad.addColorStop(1, '#aaa898');
+    }
+
+    ctx.beginPath();
+    ctx.arc(px, py, r, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // 輪廓
+    const style = isPlayer ? PLAYER_PIECE : AI_PIECE;
     ctx.strokeStyle = style.STROKE;
     ctx.lineWidth = style.LINE_WIDTH;
     ctx.stroke();
+
+    // 高光反射小圓點
+    const hlX = px - r * 0.3;
+    const hlY = py - r * 0.32;
+    const hlR = r * 0.22;
+    const hlGrad = ctx.createRadialGradient(hlX, hlY, 0, hlX, hlY, hlR);
+    hlGrad.addColorStop(0, isPlayer ? 'rgba(255,255,255,0.38)' : 'rgba(255,255,255,0.65)');
+    hlGrad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.beginPath();
+    ctx.arc(hlX, hlY, hlR, 0, Math.PI * 2);
+    ctx.fillStyle = hlGrad;
+    ctx.fill();
   }
 
   /**
@@ -211,50 +249,71 @@ export class Board extends Entity {
   }
 
   /**
-   * 繪製五子連線金色光芒特效
+   * 繪製五子連線金色光芒特效（呼吸閃爍動畫）
    * @private
-   * @param {CanvasRenderingContext2D} ctx
-   * @param {Array<{x: number, y: number}>} line
    */
   _renderWinningLine(ctx, line) {
     const { OFFSET, CELL_SIZE } = GRID_CONFIG;
     const start = line[0];
-    const end = line[line.length - 1];
+    const end   = line[line.length - 1];
 
     const sx = OFFSET + start.x * CELL_SIZE;
     const sy = OFFSET + start.y * CELL_SIZE;
-    const ex = OFFSET + end.x * CELL_SIZE;
-    const ey = OFFSET + end.y * CELL_SIZE;
+    const ex = OFFSET + end.x   * CELL_SIZE;
+    const ey = OFFSET + end.y   * CELL_SIZE;
+
+    // 呼吸係數 0.0 ~ 1.0
+    const pulse = 0.5 + Math.sin(this.pulseTimer * 2.5) * 0.5;
 
     ctx.save();
 
-    // 1. 金色底層發光寬線
+    // 1. 最外層大光暈
     ctx.beginPath();
     ctx.moveTo(sx, sy);
     ctx.lineTo(ex, ey);
-    ctx.strokeStyle = 'rgba(255, 215, 0, 0.45)';
-    ctx.lineWidth = 10;
+    ctx.strokeStyle = `rgba(255, 215, 0, ${0.12 + pulse * 0.18})`;
+    ctx.lineWidth = 22;
     ctx.lineCap = 'round';
     ctx.stroke();
 
-    // 2. 亮金核心連線
+    // 2. 中層發光
     ctx.beginPath();
     ctx.moveTo(sx, sy);
     ctx.lineTo(ex, ey);
-    ctx.strokeStyle = '#ffd700';
+    ctx.strokeStyle = `rgba(255, 215, 0, ${0.3 + pulse * 0.25})`;
+    ctx.lineWidth = 12;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // 3. 亮金核心
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(ex, ey);
+    ctx.strokeStyle = `rgba(255, 240, 80, ${0.7 + pulse * 0.3})`;
     ctx.lineWidth = 4;
     ctx.lineCap = 'round';
     ctx.stroke();
 
-    // 3. 連線各棋子周圍金色光環
+    // 4. 每個勝利棋子周圍金色呼吸環
     line.forEach(({ x, y }) => {
       const px = OFFSET + x * CELL_SIZE;
       const py = OFFSET + y * CELL_SIZE;
+
+      // 外環
       ctx.beginPath();
-      ctx.arc(px, py, THEME.PIECE_RADIUS + 3, 0, Math.PI * 2);
-      ctx.strokeStyle = '#ffd700';
-      ctx.lineWidth = 2.5;
+      ctx.arc(px, py, THEME.PIECE_RADIUS + 3 + pulse * 3, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255, 215, 0, ${0.5 + pulse * 0.4})`;
+      ctx.lineWidth = 2;
       ctx.stroke();
+
+      // 內光暈
+      const grd = ctx.createRadialGradient(px, py, 0, px, py, THEME.PIECE_RADIUS + 6);
+      grd.addColorStop(0, `rgba(255, 240, 100, ${0.25 + pulse * 0.2})`);
+      grd.addColorStop(1, 'rgba(255, 215, 0, 0)');
+      ctx.beginPath();
+      ctx.arc(px, py, THEME.PIECE_RADIUS + 6, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
     });
 
     ctx.restore();

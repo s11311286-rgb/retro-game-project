@@ -295,7 +295,7 @@ export class Game {
     this.status = status;
 
     if (status === GAME_STATUS.WIN && effectX !== undefined && effectY !== undefined) {
-      this.particleSystem.emitWin(effectX, effectY);
+      this.particleSystem.emitWin(effectX, effectY, this.canvas.width);
     }
 
     const diffBadge = `${this.currentDifficulty.ICON} ${this.currentDifficulty.LABEL}`;
